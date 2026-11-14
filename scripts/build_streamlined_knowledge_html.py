@@ -1,0 +1,1032 @@
+import json
+from pathlib import Path
+
+# Load preview_state_data.json for state data grounding
+preview_data_file = Path("data/preview_state_data.json")
+if preview_data_file.exists():
+    preview_data = json.load(open(preview_data_file, encoding="utf-8"))
+else:
+    preview_data = {}
+
+# State helplines dictionary for all 36 states/UTs
+state_helplines = {
+    "Andaman and Nicobar Islands": {"helpline": "102 / 03192-232102", "sto": "State TB Office, Port Blair", "url": "https://dhs.andaman.gov.in"},
+    "Andhra Pradesh": {"helpline": "104 / 0866-2410978", "sto": "State TB Cell, Gollapudi, Vijayawada", "url": "https://hmfw.ap.gov.in"},
+    "Arunachal Pradesh": {"helpline": "104 / 0360-2244248", "sto": "State TB Office, Directorate of Health, Naharlagun", "url": "https://nrhmarunachal.gov.in"},
+    "Assam": {"helpline": "104 / 0361-2237054", "sto": "State TB Cell, Khanapara, Guwahati", "url": "https://nhm.assam.gov.in"},
+    "Bihar": {"helpline": "104 / 0612-2234992", "sto": "State TB Demonstration Centre, Agamkuan, Patna", "url": "https://statehealthsocietybihar.org"},
+    "Chandigarh": {"helpline": "112 / 0172-2740408", "sto": "State TB Cell, GMSH Sector 16, Chandigarh", "url": "https://nrhmchd.gov.in"},
+    "Chhattisgarh": {"helpline": "104 / 0771-2235607", "sto": "State TB Cell, Sector 19, Naya Raipur", "url": "https://cghealth.nic.in"},
+    "Dadra and Nagar Haveli and Daman and Diu": {"helpline": "104 / 0260-2230470", "sto": "District TB Centre, Daman / Silvassa", "url": "https://ddd.gov.in"},
+    "Delhi": {"helpline": "1031 / 011-22307145", "sto": "Delhi State TB Control Society, Gulabi Bagh", "url": "https://delhitb.nic.in"},
+    "Goa": {"helpline": "104 / 0832-2425555", "sto": "State TB Cell, Directorate of Health Services, Campal, Panaji", "url": "https://dhsgoa.gov.in"},
+    "Gujarat": {"helpline": "104 / 079-23253298", "sto": "State TB Demonstration Centre, Civil Hospital, Ahmedabad", "url": "https://gujhealth.gujarat.gov.in"},
+    "Haryana": {"helpline": "104 / 0172-2573922", "sto": "State TB Cell, Swasthya Bhawan, Sector 6, Panchkula", "url": "https://haryanahealth.nic.in"},
+    "Himachal Pradesh": {"helpline": "104 / 0177-2621424", "sto": "State TB Cell, Directorate of Health, Kasumpti, Shimla", "url": "https://hphealth.nic.in"},
+    "Jammu and Kashmir": {"helpline": "104 / 0194-2452052", "sto": "State TB Cell, Directorate of Health, Srinagar / Jammu", "url": "https://jknhm.com"},
+    "Jharkhand": {"helpline": "104 / 0651-2261856", "sto": "State TB Cell, RCH Campus, Namkum, Ranchi", "url": "https://jharkhand.gov.in"},
+    "Karnataka": {"helpline": "104 / 080-22212950", "sto": "State TB Cell, Anand Rao Circle, Bengaluru", "url": "https://karunadu.karnataka.gov.in/hfw"},
+    "Kerala": {"helpline": "1056 (Disha) / 0471-2552056", "sto": "State TB Cell, Directorate of Health Services, Thiruvananthapuram", "url": "https://dhs.kerala.gov.in"},
+    "Ladakh": {"helpline": "112 / 01982-252012", "sto": "District TB Centre, SNM Hospital, Leh", "url": "https://ladakh.nic.in"},
+    "Lakshadweep": {"helpline": "102 / 04896-262316", "sto": "State TB Cell, Directorate of Health, Kavaratti", "url": "https://lakshadweep.gov.in"},
+    "Madhya Pradesh": {"helpline": "104 / 0755-2551860", "sto": "State TB Demonstration Centre, Idgah Hills, Bhopal", "url": "https://health.mp.gov.in"},
+    "Maharashtra": {"helpline": "104 / 022-22620224", "sto": "State TB Cell, Arogya Bhavan, St. George Hospital Compound, Mumbai", "url": "https://arogya.maharashtra.gov.in"},
+    "Manipur": {"helpline": "104 / 0385-2414625", "sto": "State TB Cell, Lamphelpat, Imphal", "url": "https://manipurhealthdirectorate.mn.gov.in"},
+    "Meghalaya": {"helpline": "108 / 0364-2224100", "sto": "State TB Cell, Directorate of Health Services, Laitumkhrah, Shillong", "url": "https://meghealth.gov.in"},
+    "Mizoram": {"helpline": "102 / 0389-2320854", "sto": "State TB Cell, Directorate of Health Services, Dinthar, Aizawl", "url": "https://health.mizoram.gov.in"},
+    "Nagaland": {"helpline": "104 / 0370-2270013", "sto": "State TB Cell, Directorate of Health & Family Welfare, Kohima", "url": "https://health.nagaland.gov.in"},
+    "Odisha": {"helpline": "104 / 0674-2390466", "sto": "State TB Demonstration Centre, SCB Medical College Campus, Cuttack", "url": "https://health.odisha.gov.in"},
+    "Puducherry": {"helpline": "104 / 0413-2336238", "sto": "State TB Control Office, Victor Simonel Street, Puducherry", "url": "https://health.py.gov.in"},
+    "Punjab": {"helpline": "104 / 0172-2602758", "sto": "State TB Cell, Parivar Kalyan Bhawan, Sector 34-A, Chandigarh", "url": "https://health.punjab.gov.in"},
+    "Rajasthan": {"helpline": "104 / 108 / 0141-2228772", "sto": "State TB Demonstration Centre, SMS Hospital Campus, Jaipur", "url": "https://rajswasthya.nic.in"},
+    "Sikkim": {"helpline": "104 / 03592-202944", "sto": "State TB Cell, STNM Hospital Complex, Sochakgang, Gangtok", "url": "https://sikkim.gov.in"},
+    "Tamil Nadu": {"helpline": "104 / 044-24320802", "sto": "State TB Cell, DMS Complex, Teynampet, Chennai", "url": "https://stoptd.tn.gov.in"},
+    "Telangana": {"helpline": "104 / 040-24653788", "sto": "State TB Cell, DM&HS Campus, Sultan Bazar, Hyderabad", "url": "https://chfw.telangana.gov.in"},
+    "Tripura": {"helpline": "104 / 0381-2325601", "sto": "State TB Cell, Directorate of Health Services, Agartala", "url": "https://health.tripura.gov.in"},
+    "Uttar Pradesh": {"helpline": "104 / 0522-2622080", "sto": "State TB Demonstration Centre, Kaiserbagh, Lucknow", "url": "https://up-health.in"},
+    "Uttarakhand": {"helpline": "104 / 0135-2720172", "sto": "State TB Cell, Directorate of Health, Danda Lakhond, Dehradun", "url": "https://ukhfws.org"},
+    "West Bengal": {"helpline": "1800-345-3261 / 033-23576000", "sto": "State TB Cell, Swasthya Bhawan, GN-29, Sector V, Salt Lake, Kolkata", "url": "https://wbhealth.gov.in"}
+}
+
+# State stats summary for context
+state_stats = {}
+for state, data in preview_data.items():
+    state_stats[state] = {
+        "notifications": f"{data.get('total_cases', 'N/A'):,}" if isinstance(data.get('total_cases'), (int, float)) else str(data.get('total_cases', 'N/A')),
+        "success_rate": f"{data.get('treatment_success_rate', 'N/A')}%" if "treatment_success_rate" in data else "N/A",
+        "cluster": data.get("cluster_name", "Regional Unit")
+    }
+
+helpline_json = json.dumps(state_helplines)
+stats_json = json.dumps(state_stats)
+
+html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TB Insight — Help & Resources</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {{
+      --bg: #090c15;
+      --card: rgba(15, 21, 37, 0.75);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.15);
+
+      /* Indian Color Accents */
+      --kesari: #f59e0b;
+      --kesari-border: rgba(245, 158, 11, 0.35);
+      --emerald: #10b981;
+      --emerald-subtle: rgba(16, 185, 129, 0.12);
+      
+      --blue: #38bdf8;
+      --blue-subtle: rgba(56, 189, 248, 0.12);
+
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --faint: #64748b;
+    }}
+
+    * {{
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }}
+
+    body {{
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 50% -10%, rgba(245, 158, 11, 0.08) 0%, transparent 60%),
+        radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.05) 0%, transparent 60%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 14px 20px 24px 20px;
+      line-height: 1.45;
+    }}
+
+    .tabular {{
+      font-variant-numeric: tabular-nums;
+    }}
+
+    /* ── HEADER ── */
+    .site-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 18px;
+      margin-bottom: 14px;
+      background: rgba(11, 16, 28, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      position: relative;
+    }}
+    .site-header::after {{
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 18px;
+      right: 18px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--kesari) 0%, rgba(255,255,255,0.6) 50%, var(--emerald) 100%);
+      border-radius: 9999px;
+      opacity: 0.7;
+    }}
+
+    .brand-group {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+    .brand-badge {{
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+      color: #0c0e14;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }}
+    .brand-title {{
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+    }}
+    .brand-sub {{
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }}
+
+    .nav-tabs {{
+      display: flex;
+      gap: 4px;
+    }}
+    .nav-link {{
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.80rem;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }}
+    .nav-link:hover {{
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+    }}
+    .nav-link.active {{
+      color: #ffffff;
+      background: var(--blue-subtle);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      font-weight: 600;
+    }}
+
+    /* ── STREAMLINED TWO-COLUMN GRID ── */
+    .content-grid {{
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 14px;
+      align-items: start;
+      max-width: 1400px;
+      margin: 0 auto;
+    }}
+
+    .main-col {{
+      display: flex;
+      flex-direction: column;
+      gap: 12px; /* Compact gap: eliminated excess vertical spacing */
+    }}
+
+    /* ── CARD 1: UNIFIED EMERGENCY LIFELINE & ZERO COST CARE ── */
+    .unified-hero-card {{
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.07) 0%, rgba(15, 21, 37, 0.85) 65%);
+      border: 1px solid var(--kesari-border);
+      border-left: 4px solid var(--kesari);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }}
+
+    .hero-top-row {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }}
+    .live-tag {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #fbbf24;
+      font-weight: 600;
+    }}
+    .pulse-dot {{
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 6px var(--emerald);
+      animation: pulse 2s infinite;
+    }}
+    @keyframes pulse {{
+      0% {{ opacity: 1; transform: scale(1); }}
+      50% {{ opacity: 0.4; transform: scale(0.9); }}
+      100% {{ opacity: 1; transform: scale(1); }}
+    }}
+
+    .hero-phone-row {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }}
+    .hero-phone-wrap {{
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }}
+    .hero-phone {{
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }}
+    .hero-sub {{
+      font-size: 0.78rem;
+      color: var(--muted);
+    }}
+
+    .btn-call-hero {{
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #0c0e14;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 9px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+      transition: all 0.15s ease;
+    }}
+    .btn-call-hero:hover {{
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
+    }}
+
+    /* SECONDARY HOTLINES ROW (INLINE) */
+    .secondary-row {{
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }}
+    .sec-link {{
+      color: var(--text);
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 3px 8px;
+      border-radius: 4px;
+      transition: background 0.15s ease;
+    }}
+    .sec-link:hover {{
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--blue);
+    }}
+    .sec-link b {{
+      color: var(--kesari);
+    }}
+
+    /* INTEGRATED ZERO-COST STRIP (NO BULKY SEPARATE BOX!) */
+    .hero-entitlements-strip {{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }}
+    .ent-item-clean {{
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.76rem;
+    }}
+    .ent-tick {{
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--emerald-subtle);
+      color: var(--emerald);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }}
+    .ent-bold {{
+      font-weight: 600;
+      color: var(--text);
+    }}
+    .ent-gray {{
+      color: var(--muted);
+      font-size: 0.72rem;
+    }}
+
+    /* ── CARD 2: UNIFIED STATE DIRECTORY & OFFICIAL PORTALS ── */
+    .unified-directory-card {{
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }}
+
+    .dir-top-bar {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }}
+    .dir-title {{
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }}
+    .state-select-compact {{
+      background: #0b1120;
+      border: 1px solid var(--border-hover);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      padding: 6px 12px;
+      outline: none;
+      cursor: pointer;
+      min-width: 200px;
+    }}
+    .state-select-compact:focus {{
+      border-color: var(--blue);
+    }}
+    .state-select-compact option {{
+      background: #0b1120;
+      color: #ffffff;
+    }}
+
+    /* SEAMLESS STATE INFO GRID (NO NESTED BOX!) */
+    .state-clean-grid {{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 16px;
+      padding: 10px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }}
+    .info-cell {{
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }}
+    .info-lbl {{
+      font-size: 0.70rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }}
+    .info-val {{
+      font-size: 0.84rem;
+      color: var(--text);
+    }}
+
+    /* DIRECTORY ACTIONS */
+    .state-action-bar {{
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }}
+    .btn-state-action {{
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-hover);
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: var(--text);
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }}
+    .btn-state-action:hover {{
+      background: var(--blue-subtle);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: var(--blue);
+    }}
+
+    /* INLINE PORTALS LINK ROW (REPLACED 3 CLUNKY BOXES!) */
+    .portals-inline-row {{
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.76rem;
+      padding-top: 6px;
+    }}
+    .portals-inline-label {{
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+      margin-right: 4px;
+    }}
+    .portal-pill-link {{
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--blue);
+      text-decoration: none;
+      background: rgba(56, 189, 248, 0.06);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 3px 9px;
+      border-radius: 5px;
+      font-size: 0.74rem;
+      transition: all 0.15s ease;
+    }}
+    .portal-pill-link:hover {{
+      background: rgba(56, 189, 248, 0.14);
+      border-color: rgba(56, 189, 248, 0.45);
+      transform: translateY(-1px);
+    }}
+
+    /* ── RIGHT CHAT PANEL (360px) - HIGHLIGHTED AI ASSISTANT ── */
+    .chat-panel {{
+      background: radial-gradient(circle at 90% 10%, rgba(56, 189, 248, 0.12) 0%, rgba(14, 20, 36, 0.90) 65%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 100px);
+      position: sticky;
+      top: 14px;
+      overflow: hidden;
+      box-shadow: 0 10px 36px rgba(0, 0, 0, 0.4), 0 0 24px rgba(56, 189, 248, 0.15);
+      position: relative;
+    }}
+    .chat-panel::before {{
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #38bdf8 0%, #0284c7 50%, #10b981 100%);
+      z-index: 2;
+    }}
+    .chat-header {{
+      padding: 12px 16px;
+      background: rgba(11, 17, 32, 0.92);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.18);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }}
+    .chat-title-wrap {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+    .chat-ai-icon {{
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(2, 132, 199, 0.35));
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }}
+    .chat-title {{
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }}
+    .ai-pill {{
+      font-size: 0.62rem;
+      font-weight: 800;
+      background: rgba(56, 189, 248, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }}
+    .chat-sub {{
+      font-size: 0.68rem;
+      color: var(--emerald);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }}
+
+    .chat-chips {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 8px 12px;
+      background: rgba(9, 14, 26, 0.75);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.12);
+    }}
+    .btn-chip {{
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      color: #e0f2fe;
+      border-radius: 5px;
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }}
+    .btn-chip:hover {{
+      color: #ffffff;
+      background: rgba(56, 189, 248, 0.2);
+      border-color: rgba(56, 189, 248, 0.5);
+    }}
+
+    .chat-stream {{
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }}
+    .chat-stream::-webkit-scrollbar {{
+      width: 4px;
+    }}
+    .chat-stream::-webkit-scrollbar-thumb {{
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }}
+
+    .msg {{
+      max-width: 90%;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 0.80rem;
+      line-height: 1.4;
+    }}
+    .bot-msg {{
+      align-self: flex-start;
+      background: rgba(20, 28, 48, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+    }}
+    .bot-msg b {{
+      color: #ffffff;
+    }}
+    .user-msg {{
+      align-self: flex-end;
+      background: var(--blue-subtle);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #ffffff;
+    }}
+
+    .chat-form {{
+      padding: 8px 12px;
+      border-top: 1px solid rgba(56, 189, 248, 0.15);
+      background: rgba(11, 16, 28, 0.9);
+      display: flex;
+      gap: 6px;
+    }}
+    .chat-input {{
+      flex: 1;
+      background: #0a0f1d;
+      border: 1px solid var(--border-hover);
+      border-radius: 6px;
+      padding: 7px 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.80rem;
+      outline: none;
+    }}
+    .chat-input:focus {{
+      border-color: var(--blue);
+    }}
+    .btn-send {{
+      background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+      color: #080f1d;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(56, 189, 248, 0.35);
+    }}
+
+    .chat-disclaimer {{
+      padding: 6px 12px;
+      background: rgba(8, 12, 20, 0.9);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.68rem;
+      color: var(--faint);
+      text-align: center;
+    }}
+
+    /* ── FOOTER ── */
+    .site-footer {{
+      margin-top: 18px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      text-align: center;
+      font-size: 0.74rem;
+      color: var(--faint);
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }}
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {{
+      .content-grid {{
+        grid-template-columns: 1fr;
+      }}
+      .chat-panel {{
+        height: 460px;
+        position: static;
+      }}
+      .hero-entitlements-strip {{
+        grid-template-columns: 1fr;
+      }}
+      .state-clean-grid {{
+        grid-template-columns: 1fr;
+      }}
+    }}
+  </style>
+</head>
+<body>
+
+  <!-- SITE HEADER / CLEAN NAVIGATION -->
+  <header class="site-header">
+    <div class="brand-group">
+      <span class="brand-badge">INDIA</span>
+      <span class="brand-title">TB Insight</span>
+      <span class="brand-sub">— State-wise TB Patterns in India</span>
+    </div>
+
+    <!-- CLEAN NAVIGATION -->
+    <nav class="nav-tabs">
+      <a href="preview.html" class="nav-link" onclick="return openAppPage(event, 'Home')">Map</a>
+      <a href="compare_preview.html" class="nav-link" onclick="return openAppPage(event, 'compare')">Compare States</a>
+      <a href="overcome_preview.html" class="nav-link" onclick="return openAppPage(event, 'overcome')">Treatment & Recovery</a>
+      <a href="/?page=knowledge" class="nav-link active">Help & Resources</a>
+    </nav>
+  </header>
+
+  <div class="content-grid">
+    
+    <!-- LEFT COLUMN: STREAMLINED INTO TWO ELEGANT CARDS (NO NESTED BOXES!) -->
+    <main class="main-col">
+      
+      <!-- CARD 1: NATIONAL TB HELPLINE + SECONDARY NUMBERS + 3 FREE ENTITLEMENTS -->
+      <section class="unified-hero-card">
+        <div class="hero-top-row">
+          <div class="live-tag">
+            <span class="pulse-dot"></span>
+            <span>National TB Lifeline · 24×7 · Toll-Free</span>
+          </div>
+          <span>Central TB Division (Ni-kshay Sampark)</span>
+        </div>
+
+        <div class="hero-phone-row">
+          <div class="hero-phone-wrap">
+            <div class="hero-phone tabular">1800-11-6666</div>
+            <div class="hero-sub">Toll-free medical guidance, nearest testing centres & patient schemes</div>
+          </div>
+          <a href="tel:1800116666" class="btn-call-hero">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            <span>Call 1800-11-6666</span>
+          </a>
+        </div>
+
+        <div class="secondary-row">
+          <span>Other Hotlines:</span>
+          <a href="tel:1075" class="sec-link">National Health: <b class="tabular">1075</b></a>
+          <a href="tel:104" class="sec-link">State Health: <b class="tabular">104</b></a>
+          <a href="tel:108" class="sec-link">Ambulance: <b class="tabular">108</b></a>
+        </div>
+
+        <!-- INTEGRATED 3 ZERO-COST PILLARS (NO STANDALONE BOX) -->
+        <div class="hero-entitlements-strip">
+          <div class="ent-item-clean">
+            <span class="ent-tick">✓</span>
+            <div>
+              <div class="ent-bold">Free Diagnosis</div>
+              <div class="ent-gray">Truenat & CBNAAT molecular testing</div>
+            </div>
+          </div>
+          <div class="ent-item-clean">
+            <span class="ent-tick">✓</span>
+            <div>
+              <div class="ent-bold">Free Full Medicines</div>
+              <div class="ent-gray">Complete daily combination therapy</div>
+            </div>
+          </div>
+          <div class="ent-item-clean">
+            <span class="ent-tick">✓</span>
+            <div>
+              <div class="ent-bold">₹1,000/mo Nutrition DBT</div>
+              <div class="ent-gray">Direct bank support (doubled Oct 2024)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD 2: STATE TB DIRECTORY & OFFICIAL PORTALS (SEAMLESS, NO BOX-IN-BOX) -->
+      <section class="unified-directory-card">
+        <div class="dir-top-bar">
+          <div class="dir-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--kesari)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span>State TB Officer & Local Helpline</span>
+          </div>
+
+          <!-- COMPACT STATE SELECTOR IN TOP BAR -->
+          <select id="state-select" class="state-select-compact" onchange="updateStateInfo(this.value)">
+            <!-- Populated by JS -->
+          </select>
+        </div>
+
+        <!-- CLEAN INLINE STATE DETAILS (ZERO NESTED BORDER BOX) -->
+        <div id="state-info-wrap">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- STREAMLINED INLINE PORTALS (REPLACED 3 CLUNKY CARDS) -->
+        <div class="portals-inline-row">
+          <span class="portals-inline-label">Portals & Apps:</span>
+          <a href="https://nikshay.in" target="_blank" class="portal-pill-link">Ni-kshay Portal ↗</a>
+          <a href="https://play.google.com/store/apps/details?id=com.nikshay.patientapp" target="_blank" class="portal-pill-link">TB Arogya Sathi App ↗</a>
+          <a href="https://tbcindia.gov.in" target="_blank" class="portal-pill-link">Central TB Division (NTEP) ↗</a>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- RIGHT: CHAT PANEL (360px) - HIGHLIGHTED AI ASSISTANT -->
+    <aside class="chat-panel">
+      <div class="chat-header">
+        <div class="chat-title-wrap">
+          <div class="chat-ai-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="m4.93 10.93 1.41 1.41"></path><path d="M2 18h2"></path><path d="M20 18h2"></path><path d="m19.07 10.93-1.41 1.41"></path><path d="M22 22H2"></path><path d="m8 22 1-6h6l1 6"></path><path d="M12 8a6 6 0 0 0-6 6v4h12v-4a6 6 0 0 0-6-6z"></path></svg>
+          </div>
+          <div class="chat-title">
+            <span>TB Care Assistant</span>
+            <span class="ai-pill">AI</span>
+          </div>
+        </div>
+        <div class="chat-sub">
+          <span class="pulse-dot"></span>
+          <span>Online · NTEP</span>
+        </div>
+      </div>
+
+      <!-- QUICK CHIPS -->
+      <div class="chat-chips">
+        <button class="btn-chip" onclick="askPreset('What are the key symptoms of TB?')">Symptoms</button>
+        <button class="btn-chip" onclick="askPreset('How does the ₹1,000/month Ni-kshay Poshan Yojana work?')">₹1,000 Poshan DBT</button>
+        <button class="btn-chip" onclick="askPreset('Is TB treatment and testing free?')">Free Care</button>
+        <button class="btn-chip" onclick="askPreset('Can TB spread through food or touch?')">Transmission</button>
+      </div>
+
+      <!-- STREAM -->
+      <div class="chat-stream" id="chat-stream">
+        <div class="msg bot-msg">
+          Ask a question about TB care, testing centres, or government schemes.
+        </div>
+      </div>
+
+      <!-- FORM -->
+      <div class="chat-form">
+        <input type="text" id="chat-input" class="chat-input" placeholder="Ask about symptoms, schemes, testing..." onkeydown="if(event.key==='Enter') sendUserMsg()">
+        <button class="btn-send" onclick="sendUserMsg()">Send</button>
+      </div>
+
+      <div class="chat-disclaimer">
+        Information only — not medical advice. Visit your nearest DOTS centre or call <span class="tabular">1800-11-6666</span>.
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- SITE FOOTER -->
+  <footer class="site-footer">
+    <div>Data sources: India TB Report, Ni-kshay, NTEP</div>
+    <div>·</div>
+    <div>Last updated: Nov 2026</div>
+    <div>·</div>
+    <div>Ministry of Health and Family Welfare, Government of India</div>
+  </footer>
+
+  <script>
+    const HELPLINES = {helpline_json};
+    const STATE_STATS = {stats_json};
+
+    // Populate state picker
+    const picker = document.getElementById("state-select");
+    Object.keys(HELPLINES).sort().forEach(st => {{
+      const opt = document.createElement("option");
+      opt.value = st;
+      opt.textContent = st;
+      picker.appendChild(opt);
+    }});
+
+    function updateStateInfo(stateName) {{
+      const data = HELPLINES[stateName] || {{
+        helpline: "104 (Toll-Free) / 1800-11-6666",
+        sto: "State TB Cell, Directorate of Health Services",
+        url: "https://tbcindia.gov.in"
+      }};
+      const stats = STATE_STATS[stateName] || {{
+        notifications: "Aggregated state reporting",
+        success_rate: "NTEP standard",
+        cluster: "Regional Unit"
+      }};
+
+      const primaryPhone = data.helpline.split("/")[0].trim().replace(/[^0-9]/g, "");
+
+      const wrap = document.getElementById("state-info-wrap");
+      wrap.innerHTML = `
+        <div class="state-clean-grid">
+          <div class="info-cell">
+            <span class="info-lbl">State Helpline / Hotline</span>
+            <span class="info-val tabular" style="font-weight:600; color:var(--kesari);">${{data.helpline}}</span>
+          </div>
+          <div class="info-cell">
+            <span class="info-lbl">State TB Office (STO)</span>
+            <span class="info-val">${{data.sto}}</span>
+          </div>
+          <div class="info-cell">
+            <span class="info-lbl">Annual Notifications (${{stats.cluster}})</span>
+            <span class="info-val tabular">${{stats.notifications}} cases</span>
+          </div>
+          <div class="info-cell">
+            <span class="info-lbl">Treatment Success Rate</span>
+            <span class="info-val tabular">${{stats.success_rate}}</span>
+          </div>
+        </div>
+        <div class="state-action-bar">
+          <a href="tel:${{primaryPhone}}" class="btn-state-action">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            <span>Dial State Helpline</span>
+          </a>
+          <a href="${{data.url}}" target="_blank" class="btn-state-action">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            <span>Open Health Portal</span>
+          </a>
+        </div>
+      `;
+    }}
+
+    // Default to first state
+    picker.value = "Delhi";
+    updateStateInfo("Delhi");
+
+    // Chatbot Knowledge Base
+    const KB = [
+      {{
+        patterns: ["symptom", "sign", "cough", "weight", "fever", "sweat", "blood"],
+        reply: "<b>Key Symptoms of Tuberculosis:</b><br>• Persistent cough lasting <b>more than 2 weeks</b><br>• Blood in sputum (hemoptysis)<br>• Low-grade fever, especially in the evening<br>• Unexplained weight loss and loss of appetite<br>• Drenching night sweats and constant fatigue.<br><br><i>If you have a cough for over 2 weeks, visit a nearby primary health centre for free testing.</i>"
+      }},
+      {{
+        patterns: ["poshan", "1000", "500", "dbt", "money", "rupee", "financial", "cash", "yojana", "scheme"],
+        reply: "<b>Ni-kshay Poshan Yojana (Updated Oct 2024):</b><br>• Financial assistance was doubled from ₹500 to <b>₹1,000/month</b> for every notified TB patient during active treatment.<br>• Transferred directly into the patient's Aadhaar-linked bank account (DBT).<br>• Contact your district TB officer or call <b>1800-11-6666</b> for enrollment support."
+      }},
+      {{
+        patterns: ["free", "cost", "charge", "price", "expensive", "afford", "pay"],
+        reply: "<b>All TB care under NTEP is 100% Free:</b><br>• <b>Free Testing:</b> Molecular diagnostics (Truenat & CBNAAT) and sputum microscopy.<br>• <b>Free Medicines:</b> Complete 6-month or longer regimen supplied free of charge.<br>• <b>Free Monitoring:</b> Regular follow-up chest X-rays and culture tests."
+      }},
+      {{
+        patterns: ["spread", "transmi", "catch", "air", "food", "touch", "contagious"],
+        reply: "<b>How TB Spreads:</b><br>• TB is airborne. Bacteria spread through tiny droplets when an untreated person coughs, sneezes, or talks.<br>• <b>TB does NOT spread through:</b> Sharing utensils, shaking hands, touching bedsheets, or eating food.<br>• Once on treatment for 2–3 weeks, most patients are no longer contagious."
+      }},
+      {{
+        patterns: ["cure", "curable", "recover", "heal", "die"],
+        reply: "<b>Yes, TB is 100% curable!</b><br>• Complete cure requires finishing the full medication course (usually 6 months), even if you feel completely healthy within 2 months.<br>• Stopping treatment early can lead to <b>drug-resistant TB (MDR-TB)</b>, which is much harder to treat."
+      }},
+      {{
+        patterns: ["mitra", "adopt", "donor", "volunteer"],
+        reply: "<b>Ni-kshay Mitra Initiative (Pradhan Mantri TB Mukt Bharat Abhiyaan):</b><br>• Community members, corporates, and NGOs adopt TB patients to provide nutritional food baskets and vocational support.<br>• Anyone can register to become a Ni-kshay Mitra at <b>communitysupport.nikshay.in</b>."
+      }}
+    ];
+
+    function sendUserMsg() {{
+      const input = document.getElementById("chat-input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendMsg(text, "user-msg");
+      input.value = "";
+
+      setTimeout(() => {{
+        const lower = text.toLowerCase();
+        let matched = null;
+        for (const item of KB) {{
+          if (item.patterns.some(p => lower.includes(p))) {{
+            matched = item.reply;
+            break;
+          }}
+        }}
+
+        if (!matched) {{
+          matched = "For detailed medical guidance on this topic, please contact the <b>National TB Helpline (1800-11-6666)</b> or visit your nearest government health centre or DOTS provider.";
+        }}
+
+        appendMsg(matched, "bot-msg");
+      }}, 300);
+    }}
+
+    function askPreset(promptText) {{
+      const input = document.getElementById("chat-input");
+      input.value = promptText;
+      sendUserMsg();
+    }}
+
+    function appendMsg(html, className) {{
+      const stream = document.getElementById("chat-stream");
+      const div = document.createElement("div");
+      div.className = "msg " + className;
+      div.innerHTML = html;
+      stream.appendChild(div);
+      stream.scrollTop = stream.scrollHeight;
+    }}
+
+    function openAppPage(event, pageKey) {{
+      try {{
+        if (window.top && window.top !== window.self) {{
+          const links = {{
+            'Home': window.top.document.getElementById('st-nav-link-home'),
+            'compare': window.top.document.getElementById('st-nav-link-compare'),
+            'overcome': window.top.document.getElementById('st-nav-link-overcome'),
+            'knowledge': window.top.document.getElementById('st-nav-link-knowledge')
+          }};
+          if (links[pageKey]) {{
+            event.preventDefault();
+            links[pageKey].click();
+            return false;
+          }}
+          event.preventDefault();
+          const targetUrl = new URL(window.top.location.href);
+          targetUrl.searchParams.set('page', pageKey);
+          window.top.location.href = targetUrl.toString();
+          return false;
+        }}
+      }} catch (e) {{
+        console.warn("Cross-frame navigation fallback", e);
+      }}
+      return true;
+    }}
+  </script>
+</body>
+</html>
+"""
+
+output_path = Path("knowledge_preview.html")
+output_path.write_text(html_content, encoding="utf-8")
+print(f"Generated streamlined, gap-reduced knowledge_preview.html! File size: {len(html_content)} bytes")

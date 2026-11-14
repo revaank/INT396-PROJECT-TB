@@ -49,8 +49,17 @@ total_dia = sum(s["dia"] for s in state_data.values())
 sorted_dias = sorted(s["dia"] for s in state_data.values())
 median_dia = (sorted_dias[17] + sorted_dias[18]) / 2  # 30,499.5
 
-# Generate SVG paths for all shapes
-svg_elements = []
+# Generate SVG paths for all shapes with adaptive geometry and layer stacking order
+small_territories = {
+    "Delhi": (201.3, 222.0, 5.0),
+    "Chandigarh": (194.9, 180.0, 4.5),
+    "Puducherry": (248.0, 569.0, 4.5),
+    "Goa": (145.7, 496.4, 4.5),
+    "Lakshadweep": (123.0, 600.0, 5.0),
+    "Dadra and Nagar Haveli and Daman and Diu": (110.0, 390.0, 4.5)
+}
+
+parsed_features = []
 for feat in geo["features"]:
     raw_name = feat["properties"]["shapeName"]
     c_name = clean(raw_name)
@@ -65,7 +74,6 @@ for feat in geo["features"]:
         "cluster": "Group A"
     })
     
-    # Calculate share of national total
     pct_share = (s_info["dia"] / total_dia * 100) if total_dia > 0 else 0
     delta_vs_med = ((s_info["dia"] - median_dia) / median_dia * 100) if median_dia > 0 else 0
     
@@ -74,18 +82,28 @@ for feat in geo["features"]:
     gtype = geom["type"]
     polys = [coords] if gtype == "Polygon" else coords
     
+    # Adaptive simplification: protect small areas from over-simplification
+    is_small = s_info["name"] in small_territories or s_info["name"] in ["Sikkim", "Tripura", "Meghalaya", "Mizoram", "Nagaland"]
+    dist_threshold = 0.015 if is_small else 0.18
+    
     d_parts = []
+    total_area_approx = 0.0
     for poly in polys:
         ring = poly[0] if isinstance(poly[0][0], (list, tuple)) else poly
-        simp = simplify_ring(ring, 0.22)
+        simp = simplify_ring(ring, dist_threshold)
         pts = [pt_to_svg(p[0], p[1]) for p in simp if isinstance(p[0], (int, float))]
         if len(pts) >= 3:
             d_parts.append("M" + " L".join(pts) + " Z")
+            # Shoelace formula for area ordering
+            parsed_pts = [[float(v) for v in p.split(',')] for p in pts]
+            n = len(parsed_pts)
+            area = sum(parsed_pts[i][0] * parsed_pts[(i+1)%n][1] - parsed_pts[(i+1)%n][0] * parsed_pts[i][1] for i in range(n))
+            total_area_approx += abs(area) / 2.0
             
     if d_parts:
         d_str = " ".join(d_parts)
         is_selected = ' selected' if matched_state == 'Maharashtra' else ''
-        svg_elements.append(
+        path_tag = (
             f'<path class="state-shape{is_selected}" id="shape-{c_name}" '
             f'data-name="{s_info["name"]}" '
             f'data-rank="{s_info["rank"]}" '
@@ -98,6 +116,43 @@ for feat in geo["features"]:
             f'data-share="{pct_share:.2f}%" '
             f'data-delta="{delta_vs_med:+.1f}%" '
             f'd="{d_str}" />'
+        )
+        parsed_features.append({
+            'state_name': s_info["name"],
+            'c_name': c_name,
+            'is_small': is_small,
+            'area': total_area_approx,
+            'tag': path_tag,
+            's_info': s_info,
+            'pct_share': pct_share,
+            'delta_vs_med': delta_vs_med
+        })
+
+# Sort so large states are drawn FIRST (underneath) and small states are drawn LAST (on top)
+parsed_features.sort(key=lambda x: x['area'], reverse=True)
+
+svg_elements = [item['tag'] for item in parsed_features]
+
+# Add high-visibility interactive UT indicator dots for minute territories
+for st_name, (cx, cy, r) in small_territories.items():
+    st_info = state_data.get(st_name, {})
+    if st_info:
+        c_name = clean(st_name)
+        pct_share = (st_info["dia"] / total_dia * 100) if total_dia > 0 else 0
+        delta_vs_med = ((st_info["dia"] - median_dia) / median_dia * 100) if median_dia > 0 else 0
+        svg_elements.append(
+            f'<circle class="state-shape ut-dot" id="dot-{c_name}" '
+            f'cx="{cx}" cy="{cy}" r="{r}" '
+            f'data-name="{st_info["name"]}" '
+            f'data-rank="{st_info["rank"]}" '
+            f'data-zone="{st_info["zone"]}" '
+            f'data-dia="{st_info["dia"]:,}" '
+            f'data-dia-raw="{st_info["dia"]}" '
+            f'data-tob="{st_info["tob"]:,}" '
+            f'data-alc="{st_info["alc"]:,}" '
+            f'data-cluster="{st_info["cluster"]}" '
+            f'data-share="{pct_share:.2f}%" '
+            f'data-delta="{delta_vs_med:+.1f}%" />'
         )
 
 svg_body = "\n          ".join(svg_elements)
@@ -284,22 +339,22 @@ html_template = f"""<!DOCTYPE html>
     display: flex;
     align-items: center;
     gap: 6px;
-    background: rgba(56, 189, 248, 0.1);
-    border: 1px solid rgba(56, 189, 248, 0.25);
+    background: rgba(244, 190, 94, 0.12);
+    border: 1px solid rgba(244, 190, 94, 0.28);
     border-radius: 9999px;
     padding: 3px 8px;
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.08em;
-    color: #38bdf8;
+    color: #f4be5e;
     text-transform: uppercase;
   }}
   .fact-tag .pulse-dot {{
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #38bdf8;
-    box-shadow: 0 0 6px #38bdf8;
+    background: #f4be5e;
+    box-shadow: 0 0 6px #f4be5e;
     animation: blink 2s infinite;
   }}
   @keyframes blink {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.3; }} }}
@@ -366,7 +421,7 @@ html_template = f"""<!DOCTYPE html>
   .fact-progress-fill {{
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    background: linear-gradient(90deg, #c24b6f, #f4be5e);
     transition: width 0.1s linear;
   }}
 
@@ -411,9 +466,9 @@ html_template = f"""<!DOCTYPE html>
     white-space: nowrap;
   }}
   .filter-chip:hover, .filter-chip.active {{
-    background: rgba(56, 189, 248, 0.15);
-    color: #38bdf8;
-    border-color: rgba(56, 189, 248, 0.35);
+    background: rgba(244, 190, 94, 0.15);
+    color: #f4be5e;
+    border-color: rgba(244, 190, 94, 0.35);
   }}
   .search-wrap {{
     position: relative;
@@ -431,7 +486,7 @@ html_template = f"""<!DOCTYPE html>
     font-family: inherit;
   }}
   .search-input:focus {{
-    border-color: #38bdf8;
+    border-color: #f4be5e;
     background: rgba(255, 255, 255, 0.08);
   }}
   .lb-col-header {{
@@ -449,7 +504,7 @@ html_template = f"""<!DOCTYPE html>
   }}
   .lb-col-header span:last-child {{
     text-align: right;
-    color: #38bdf8;
+    color: #f4be5e;
   }}
   .state-list {{
     flex: 1;
@@ -490,8 +545,8 @@ html_template = f"""<!DOCTYPE html>
     border-color: rgba(255, 255, 255, 0.1);
   }}
   .state-item.active {{
-    background: rgba(56, 189, 248, 0.12);
-    border-color: rgba(56, 189, 248, 0.35);
+    background: rgba(244, 190, 94, 0.12);
+    border-color: rgba(244, 190, 94, 0.35);
     color: #ffffff;
   }}
   .state-item .s-val {{
@@ -508,22 +563,24 @@ html_template = f"""<!DOCTYPE html>
     border-radius: 4px;
     font-weight: 700;
   }}
-  .c-tag-b {{ background: rgba(56, 189, 248, 0.15); color: #38bdf8; }}
-  .c-tag-c {{ background: rgba(129, 140, 248, 0.15); color: #818cf8; }}
-  .c-tag-a {{ background: rgba(100, 116, 139, 0.2); color: #94a3b8; }}
+  .c-tag-b {{ background: rgba(244, 190, 94, 0.15); color: #f4be5e; }}
+  .c-tag-c {{ background: rgba(224, 122, 95, 0.15); color: #e07a5f; }}
+  .c-tag-a {{ background: rgba(139, 58, 134, 0.22); color: #d8b4e2; }}
 
   /* CENTER COLUMN: MAP & HUD CONTROLS */
   .col-center {{
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     position: relative;
     height: 100%;
+    padding-top: 6px;
+    padding-bottom: 6px;
   }}
   .map-layer-pills {{
-    position: absolute;
-    top: 0;
+    position: relative;
+    margin-bottom: 6px;
     z-index: 10;
     display: flex;
     gap: 6px;
@@ -548,17 +605,19 @@ html_template = f"""<!DOCTYPE html>
   }}
   .layer-btn:hover {{ color: #ffffff; }}
   .layer-btn.active {{
-    background: #38bdf8;
-    color: #07080c;
-    box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+    background: #f4be5e;
+    color: #1a1208;
+    box-shadow: 0 0 14px rgba(244, 190, 94, 0.45);
   }}
 
   /* FLOATING MAP HUD LEGEND */
   .map-legend {{
     position: absolute;
-    bottom: 45px;
-    left: 20px;
+    bottom: 25px;
+    right: 25px;
+    left: auto;
     z-index: 10;
+    pointer-events: none;
     background: rgba(14, 18, 26, 0.88);
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -603,21 +662,22 @@ html_template = f"""<!DOCTYPE html>
     pointer-events: none;
     z-index: 200;
     background: rgba(14, 18, 26, 0.95);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(56, 189, 248, 0.35);
-    border-radius: 8px;
+    backdrop-filter: blur(14px);
+    border: 1.5px solid rgba(244, 190, 94, 0.5);
+    border-radius: 9px;
     padding: 8px 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85), 0 0 16px rgba(244, 190, 94, 0.2);
     display: none;
     font-size: 0.72rem;
     color: #fff;
     transform: translate(-50%, -125%);
     white-space: nowrap;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }}
   .tooltip-title {{
     font-weight: 800;
-    font-size: 0.8rem;
-    margin-bottom: 2px;
+    font-size: 0.82rem;
+    margin-bottom: 3px;
     color: #ffffff;
   }}
   .tooltip-row {{
@@ -627,37 +687,55 @@ html_template = f"""<!DOCTYPE html>
     color: #94a3b8;
     font-size: 0.68rem;
   }}
-  .tooltip-row strong {{ color: #38bdf8; font-family: 'JetBrains Mono', monospace; }}
+  .tooltip-row strong {{ color: #f8fafc; font-family: 'JetBrains Mono', monospace; font-weight: 700; }}
 
   /* SVG MAP STYLING */
   .india-map {{
     width: 100%;
     height: 100%;
     max-height: 590px;
-    filter: drop-shadow(0 0 40px rgba(0, 242, 254, 0.12)) drop-shadow(0 20px 45px rgba(0, 0, 0, 0.85));
+    filter: drop-shadow(0 0 35px rgba(224, 122, 95, 0.08)) drop-shadow(0 20px 45px rgba(0, 0, 0, 0.85));
   }}
   .state-shape {{
-    stroke: rgba(255, 255, 255, 0.28);
+    fill: #2d1838;
+    stroke: rgba(255, 255, 255, 0.22);
     stroke-width: 0.85;
     stroke-linejoin: round;
     transition: fill 0.35s ease, stroke 0.2s ease, filter 0.2s ease;
     cursor: pointer;
+    pointer-events: all;
+    vector-effect: non-scaling-stroke;
   }}
   .state-shape:hover {{
     stroke: #ffffff;
-    stroke-width: 1.8;
-    filter: brightness(1.25) drop-shadow(0 0 10px rgba(0, 242, 254, 0.5));
+    stroke-width: 2.2;
+    filter: brightness(1.6) saturate(1.5) drop-shadow(0 0 14px rgba(255, 255, 255, 0.75));
   }}
   .state-shape.selected {{
-    stroke: #00f2fe;
-    stroke-width: 2.4;
-    filter: brightness(1.35) drop-shadow(0 0 16px rgba(0, 242, 254, 0.85));
+    stroke: #ffffff;
+    stroke-width: 2.8;
+    filter: brightness(1.7) saturate(1.6) drop-shadow(0 0 20px rgba(244, 190, 94, 0.95));
+  }}
+  .ut-dot {{
+    fill: #f4be5e;
+    stroke: #ffffff;
+    stroke-width: 1.5;
+    cursor: pointer;
+    pointer-events: all;
+    filter: drop-shadow(0 0 6px rgba(244, 190, 94, 0.9));
+    transition: transform 0.2s ease, filter 0.2s ease, stroke-width 0.2s ease;
+  }}
+  .ut-dot:hover, .ut-dot.selected {{
+    stroke: #ffffff;
+    stroke-width: 2.5;
+    transform-origin: center;
+    filter: drop-shadow(0 0 14px #ffffff) brightness(1.4);
   }}
 
   /* SCROLL CUE */
   .scroll-cue {{
-    position: absolute;
-    bottom: 8px;
+    position: relative;
+    margin-top: 6px;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -666,6 +744,7 @@ html_template = f"""<!DOCTYPE html>
     color: #64748b;
     text-decoration: none;
     transition: color 0.2s;
+    z-index: 5;
   }}
   .scroll-cue:hover {{ color: #38bdf8; }}
 
@@ -734,7 +813,7 @@ html_template = f"""<!DOCTYPE html>
   .cluster-chip-val {{
     font-size: 0.84rem;
     font-weight: 700;
-    color: #38bdf8;
+    color: #f4be5e;
     margin-top: 2px;
   }}
   .cluster-desc {{
@@ -804,14 +883,14 @@ html_template = f"""<!DOCTYPE html>
   .mbar-fill {{
     height: 100%;
     border-radius: 9999px;
-    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    background: linear-gradient(90deg, #c24b6f, #f4be5e);
     transition: width 0.4s ease;
   }}
   .mbar-fill-green {{
-    background: linear-gradient(90deg, #059669, #10b981) !important;
+    background: linear-gradient(90deg, #552b7e, #a78bfa) !important;
   }}
   .mbar-fill-amber {{
-    background: linear-gradient(90deg, #d97706, #f59e0b) !important;
+    background: linear-gradient(90deg, #8b3a86, #e07a5f) !important;
   }}
   
   .policy-box {{
@@ -820,9 +899,9 @@ html_template = f"""<!DOCTYPE html>
     margin-bottom: 10px;
     line-height: 1.5;
     padding-left: 8px;
-    border-left: 2px solid rgba(56, 189, 248, 0.3);
+    border-left: 2px solid rgba(244, 190, 94, 0.4);
   }}
-  .policy-box strong {{ color: #38bdf8; }}
+  .policy-box strong {{ color: #f4be5e; }}
 
   .twins-box {{
     font-size: 0.68rem;
@@ -878,13 +957,14 @@ html_template = f"""<!DOCTYPE html>
     text-decoration: none;
   }}
   .btn-print {{
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #475569;
+    background: rgba(244, 190, 94, 0.08);
+    border: 1px solid rgba(244, 190, 94, 0.25);
+    color: #f4be5e;
   }}
   .btn-print:hover {{
-    border-color: rgba(255,255,255,0.2);
-    color: #94a3b8;
+    background: rgba(244, 190, 94, 0.18);
+    border-color: rgba(244, 190, 94, 0.45);
+    color: #ffffff;
   }}
   .btn-lab {{
     background: rgba(56, 189, 248, 0.1);
@@ -1244,6 +1324,14 @@ html_template = f"""<!DOCTYPE html>
       <span class="brand-sub">/ INDIA REGIONAL INTELLIGENCE</span>
     </div>
 
+    <!-- UNIFIED 4 NAVIGATION PILLS -->
+    <nav class="nav-pill-group">
+      <a href="preview.html" class="nav-pill active">🗺️ Command Map</a>
+      <a href="compare_preview.html" class="nav-pill" onclick="return openCompare(event)">📈 Compare States</a>
+      <a href="overcome_preview.html" class="nav-pill" onclick="return navigateTo('overcome')">🚀 Road to Overcome</a>
+      <a href="/?page=knowledge" class="nav-pill" onclick="return navigateTo('knowledge')">🆘 TB Knowledge & Helplines</a>
+    </nav>
+
     <div class="header-actions">
       <div class="provenance-badge">
         <div class="status-pulse"></div>
@@ -1532,34 +1620,34 @@ html_template = f"""<!DOCTYPE html>
   <!-- ════════════════════════════════════════════════════════ -->
   <section class="viewport-launch" id="modules">
     <div style="text-align: center; max-width: 650px;">
-      <span class="step-pill">Course INT396 · Advanced Project Suite</span>
+      <div style="font-size: 0.74rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px;">Course INT396 · Advanced Project Suite</div>
       <h2 class="section-headline" style="font-size: 2.2rem; margin-bottom: 8px; color: #fff;">Explore Intelligence Modules</h2>
       <p style="color: #64748b; font-size: 0.95rem;">Jump into specialized research tools, mathematical clustering benchmarks, and viva defense artifacts.</p>
     </div>
 
     <div class="portal-grid">
-      <div class="portal-card" onclick="navigateTo('compare')">
+      <a href="compare_preview.html" class="portal-card" style="text-decoration:none; color:inherit;" onclick="return openCompare(event)">
         <div class="portal-tag">Module 01 · Side-by-Side Analysis</div>
         <div class="portal-title">📈 Compare States</div>
         <div class="portal-desc">Put up to 6 states side-by-side to track and compare their 5-year notification trajectories from 2019 to 2023.</div>
-      </div>
+      </a>
 
-      <div class="portal-card" onclick="navigateTo('clusters')">
-        <div class="portal-tag">Module 02 · Find State "Twins"</div>
-        <div class="portal-title">👥 State Similarity Lab</div>
-        <div class="portal-desc">Let AI discover which states face the exact same TB challenge. Unsupervised clustering groups all 36 states into 3 similar "teams".</div>
-      </div>
+      <a href="overcome_preview.html" class="portal-card" style="text-decoration:none; color:inherit;" onclick="return navigateTo('overcome')">
+        <div class="portal-tag">Module 02 · State Strategy & Budget</div>
+        <div class="portal-title">🚀 Road to Overcome</div>
+        <div class="portal-desc">Pick any state to get a real-world budget allocation, action blueprint, and discover its regional health twins.</div>
+      </a>
 
       <div class="portal-card" onclick="navigateTo('explainer')">
-        <div class="portal-tag">Module 03</div>
+        <div class="portal-tag">Module 03 · Viva & Concepts</div>
         <div class="portal-title">💡 AI Data Explainer</div>
         <div class="portal-desc">Get instant plain-language translations of data points and understand how standardization works without jargon.</div>
       </div>
 
-      <div class="portal-card" onclick="window.open('https://nikshay.in/', '_blank')">
-        <div class="portal-tag">Module 04</div>
-        <div class="portal-title">🆘 Official Helplines</div>
-        <div class="portal-desc">Direct access to the Government of India Ni-kshay national portal and official healthcare support routes.</div>
+      <div class="portal-card" onclick="navigateTo('knowledge')">
+        <div class="portal-tag">Module 04 · Awareness & Helplines</div>
+        <div class="portal-title">🆘 TB Knowledge & Helplines</div>
+        <div class="portal-desc">Direct access to Central TB Division Ni-kshay national resources, symptoms guide, and official 1800-11-6666 helpline.</div>
       </div>
     </div>
   </section>
@@ -1647,19 +1735,19 @@ html_template = f"""<!DOCTYPE html>
       name: 'Group B · Hyper-Burden Epicenter',
       desc: 'Extremely high case volume carrying ~29.8% of national notifications. Critical demand for decentralized rapid molecular testing.',
       policy: 'Clinical Focus: Intensify urban TB dispensaries, expand private-provider mandatory reporting, and fast-track daily regimen adherence.',
-      color: '#38bdf8'
+      color: '#f4be5e'
     }},
     'Group C': {{
       name: 'Group C · High-Burden Major State',
       desc: 'Substantial surveillance volume with high bidirectional screening rates (>85%) but significant comorbid diabetes and tobacco burden.',
       policy: 'Clinical Focus: Scale up nutritional support (Nikshay Poshan Yojana) and integrate routine blood glucose screening in all primary centers.',
-      color: '#818cf8'
+      color: '#e07a5f'
     }},
     'Group A': {{
       name: 'Group A · Baseline Surveillance & UTs',
       desc: 'Low aggregate case numbers with high geographic dispersion. Strong candidates for localized sub-district TB elimination certification.',
       policy: 'Clinical Focus: Maintain high index of suspicion, active case finding in tribal pockets, and rigorous contact tracing.',
-      color: '#273248'
+      color: '#8b3a86'
     }}
   }};
 
@@ -1686,10 +1774,14 @@ html_template = f"""<!DOCTYPE html>
   const NAT_MEDIAN = 30499.5;
 
   function updateTelemetry(el) {{
-    shapes.forEach(x => x.classList.remove('selected'));
-    el.classList.add('selected');
-
     const sName = el.getAttribute('data-name');
+    shapes.forEach(x => {{
+      if (x.getAttribute('data-name') === sName) {{
+        x.classList.add('selected');
+      }} else {{
+        x.classList.remove('selected');
+      }}
+    }});
     const rawVal = parseInt(el.getAttribute('data-dia-raw') || '0');
     const rawTob = parseInt((el.getAttribute('data-tob') || '0').replace(/,/g, ''));
     const rawAlc = parseInt((el.getAttribute('data-alc') || '0').replace(/,/g, ''));
@@ -1793,10 +1885,23 @@ html_template = f"""<!DOCTYPE html>
 
   function showTooltip(e, el) {{
     if (!tooltip) return;
-    ttName.textContent = el.getAttribute('data-name');
+    const sName = el.getAttribute('data-name');
+    const clusterKey = el.getAttribute('data-cluster') || 'Group A';
+    const cMeta = CLUSTER_META[clusterKey] || CLUSTER_META['Group A'];
+    const stateFill = el.style.fill || cMeta.color || '#f4be5e';
+    const activeColor = (currentLayer === 'cluster') ? (cMeta.color || stateFill) : stateFill;
+
+    ttName.textContent = sName;
     ttVal.textContent = el.getAttribute('data-' + currentLayer) || '0';
     ttShare.textContent = el.getAttribute('data-share') || '0%';
     ttCluster.textContent = el.getAttribute('data-cluster') || 'Group A';
+
+    // Dynamic border & glow outline matching state group, while keeping font clear and uniform
+    tooltip.style.borderColor = activeColor;
+    tooltip.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.85), 0 0 18px ' + activeColor + '55';
+    ttVal.style.color = '#f8fafc';
+    ttCluster.style.color = '#f8fafc';
+
     tooltip.style.display = 'block';
     moveTooltip(e);
   }}
@@ -1855,18 +1960,18 @@ html_template = f"""<!DOCTYPE html>
 
   // CHOROPLETH COLOR ENGINE
   const COLOR_PALETTE = {{
-    tier5: '#00f2fe', // > 200k (UP, MH): Luminous Electric Cyan (Epicenters)
-    tier4: '#38bdf8', // 100k - 200k (MP, RJ, BR, GJ): Bright Sky Azure
-    tier3: '#0284c7', // 40k - 100k (TN, WB, AP, HR, KA, OD, PB, AS, DL, TS, JH): Vivid Cobalt Blue
-    tier2: '#2563eb', // 15k - 40k (CG, UK, KL, HP): Rich Royal Blue
-    tier1: '#3b82f6', // 4k - 15k (JK, ML): Visible Sapphire Blue
-    tier0: '#1e293b'  // < 4k (NE states, UTs): Distinct Slate Steel (never pitch-black)
+    tier5: '#f4be5e', // > 200k (UP, MH): Soft Champagne Gold
+    tier4: '#e07a5f', // 100k - 200k (MP, RJ, BR, GJ): Warm Soft Terracotta
+    tier3: '#c24b6f', // 40k - 100k (TN, WB, AP, HR, KA, OD, PB, AS, DL, TS, JH): Soft Dusty Crimson
+    tier2: '#8b3a86', // 15k - 40k (CG, UK, KL, HP): Muted Orchid Plum
+    tier1: '#552b7e', // 4k - 15k (JK, ML): Soft Velvet Violet
+    tier0: '#2d1b4e'  // < 4k (NE states, UTs): Elegant Deep Aubergine
   }};
 
   const CLUSTER_PALETTE = {{
-    'Group B': '#00f2fe', // Hyper-Burden Epicenters (Electric Cyan)
-    'Group C': '#a855f7', // High-Burden Major States (Luminous Violet)
-    'Group A': '#10b981'  // Baseline Surveillance & UTs (Vibrant Emerald Teal)
+    'Group B': '#f4be5e', // Hyper-Burden Epicenters (Soft Champagne Gold)
+    'Group C': '#e07a5f', // High-Burden Major States (Warm Terracotta)
+    'Group A': '#8b3a86'  // Baseline Surveillance & UTs (Muted Orchid Plum)
   }};
 
   function getChoroplethColor(raw) {{
@@ -1885,21 +1990,21 @@ html_template = f"""<!DOCTYPE html>
       legEl.innerHTML = `
         <div class="legend-title">STATES GROUPED BY SIMILAR HEALTH PATTERNS (3 TEAMS)</div>
         <div class="legend-scale-row">
-          <span class="legend-item"><span class="legend-swatch" style="background:#00f2fe; box-shadow:0 0 8px rgba(0,242,254,0.6);"></span>Team B: Outlier scale (2 states)</span>
-          <span class="legend-item"><span class="legend-swatch" style="background:#a855f7; box-shadow:0 0 8px rgba(168,85,247,0.5);"></span>Team C: High burden (13 states)</span>
-          <span class="legend-item"><span class="legend-swatch" style="background:#10b981; box-shadow:0 0 8px rgba(16,185,129,0.5);"></span>Team A: Lower burden (21 states)</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#f4be5e; box-shadow:0 0 8px rgba(244,190,94,0.6);"></span>Team B: Outlier scale (2 states)</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#e07a5f; box-shadow:0 0 8px rgba(224,122,95,0.6);"></span>Team C: High burden (13 states)</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#8b3a86; box-shadow:0 0 8px rgba(139,58,134,0.6);"></span>Team A: Lower burden (21 states)</span>
         </div>
       `;
     }} else {{
       legEl.innerHTML = `
         <div class="legend-title">SURVEILLANCE SCALE (CASES · NAT'L MEDIAN: 30.5k)</div>
         <div class="legend-scale-row">
-          <span class="legend-item"><span class="legend-swatch" style="background:#1e293b; border:1px solid rgba(255,255,255,0.3);"></span>&lt;4k</span>
-          <span class="legend-item"><span class="legend-swatch" style="background:#3b82f6;"></span>15k</span>
-          <span class="legend-item"><span class="legend-swatch" style="background:#2563eb;"></span>40k</span>
-          <span class="legend-item"><span class="legend-swatch" style="background:#0284c7;"></span>100k</span>
-          <span class="legend-item"><span class="legend-swatch" style="background:#38bdf8;"></span>200k</span>
-          <span class="legend-item"><span class="legend-swatch" style="background:#00f2fe; box-shadow:0 0 8px rgba(0,242,254,0.6);"></span>&gt;200k</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#2d1b4e; border:1px solid rgba(255,255,255,0.25);"></span>&lt;4k</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#552b7e;"></span>15k</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#8b3a86;"></span>40k</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#c24b6f;"></span>100k</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#e07a5f;"></span>200k</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#f4be5e; box-shadow:0 0 6px rgba(244,190,94,0.6);"></span>&gt;200k (UP, MH)</span>
         </div>
       `;
     }}
@@ -1945,16 +2050,84 @@ html_template = f"""<!DOCTYPE html>
   // INITIAL MAP RECOLOR
   setLayer('dia');
 
-  function navigateTo(pageKey) {{
+  function openCompare(e) {{
+    if (e && e.preventDefault) e.preventDefault();
+    // 1. Click parent unsandboxed link if available
+    try {{
+      if (window.parent && window.parent.document) {{
+        const link = window.parent.document.getElementById('st-nav-link-compare');
+        if (link) {{
+          link.click();
+          return false;
+        }}
+      }}
+    }} catch(err) {{}}
+
+    // 2. PostMessage to parent
     try {{
       if (window.parent && window.parent !== window) {{
-        window.parent.location.href = '/?page=' + encodeURIComponent(pageKey);
-      }} else {{
-        window.location.href = '/?page=' + encodeURIComponent(pageKey);
+        window.parent.postMessage({{ type: 'aerotb-nav', page: 'compare' }}, '*');
       }}
-    }} catch(e) {{
-      window.location.href = '/?page=' + encodeURIComponent(pageKey);
+    }} catch(err) {{}}
+
+    // 3. Try top location
+    try {{
+      if (window.top && window.top !== window) {{
+        window.top.location.href = '/?page=compare';
+        return false;
+      }}
+    }} catch(err) {{}}
+
+    // 4. HTTP direct fallback
+    if (window.location.protocol.startsWith('http')) {{
+      window.location.href = '/?page=compare';
+      return false;
     }}
+
+    // 5. Offline standalone fallback
+    window.location.href = 'compare_preview.html';
+    return false;
+  }}
+
+  function navigateTo(pageKey) {{
+    if (pageKey === 'compare') {{
+      return openCompare();
+    }}
+    // 1. Click parent unsandboxed link
+    try {{
+      if (window.parent && window.parent.document) {{
+        const link = window.parent.document.getElementById('st-nav-link-' + pageKey);
+        if (link) {{
+          link.click();
+          return false;
+        }}
+      }}
+    }} catch(err) {{}}
+
+    // 2. PostMessage to parent
+    try {{
+      if (window.parent && window.parent !== window) {{
+        window.parent.postMessage({{ type: 'aerotb-nav', page: pageKey }}, '*');
+      }}
+    }} catch(err) {{}}
+
+    // 3. Try top location
+    const targetUrl = '/?page=' + encodeURIComponent(pageKey);
+    try {{
+      if (window.top && window.top !== window) {{
+        window.top.location.href = targetUrl;
+        return false;
+      }}
+    }} catch(e) {{}}
+    try {{
+      if (window.parent && window.parent !== window) {{
+        window.parent.location.href = targetUrl;
+        return false;
+      }}
+    }} catch(e) {{}}
+
+    window.location.href = targetUrl;
+    return false;
   }}
 
   // 3D SCROLL STORY TELLING SCRIPT
