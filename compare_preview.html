@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroTB | State Comparison Battle Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #060913;
+      color: #e2e8f0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* TOP HEADER */
+    .arena-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 36px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 14, 24, 0.85);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      font-size: 1.4rem;
+      color: #f4be5e;
+      text-shadow: 0 0 12px rgba(244, 190, 94, 0.5);
+    }
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+    .brand-sub {
+      font-size: 0.72rem;
+      color: #64748b;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* MINIMAL SEGMENTED NAVIGATION PILLS */
+    .nav-pill-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(14, 18, 26, 0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      padding: 4px 6px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .nav-pill {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .nav-pill:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .nav-pill.active {
+      background: rgba(244, 190, 94, 0.16);
+      color: #f4be5e;
+      border: 1px solid rgba(244, 190, 94, 0.35);
+      box-shadow: 0 0 12px rgba(244, 190, 94, 0.2);
+    }
+
+    .back-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      transition: all 0.2s;
+    }
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    /* MAIN CONTAINER */
+    .arena-main {
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 18px 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* SECTION TITLE & PRESET BAR */
+    .arena-hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .hero-text h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+    .hero-text p {
+      color: #94a3b8;
+      font-size: 0.88rem;
+      margin-top: 4px;
+    }
+
+    /* DERBY PRESET CHIPS */
+    .rivalry-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .rivalry-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-right: 4px;
+    }
+    .preset-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .preset-pill:hover {
+      background: rgba(244, 190, 94, 0.15);
+      border-color: rgba(244, 190, 94, 0.4);
+      color: #f4be5e;
+      transform: translateY(-2px);
+    }
+    .preset-pill.special {
+      background: linear-gradient(135deg, rgba(225, 29, 72, 0.2), rgba(244, 190, 94, 0.2));
+      border-color: rgba(244, 190, 94, 0.4);
+      color: #f4be5e;
+    }
+
+    /* ACTIVE ARENA DOCK */
+    .arena-dock {
+      background: rgba(14, 18, 28, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 10px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .dock-chips {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .dock-status {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-right: 6px;
+    }
+    .dock-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dock-dropdown {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f8fafc;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .dock-dropdown:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(244, 190, 94, 0.5);
+      color: #f4be5e;
+    }
+    .dock-dropdown option {
+      background: #0a0e1a;
+      color: #f8fafc;
+    }
+    .fighter-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #fff;
+      border: 1px solid transparent;
+      animation: popIn 0.2s ease;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .fighter-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .fighter-remove {
+      cursor: pointer;
+      font-size: 0.85rem;
+      opacity: 0.6;
+      transition: opacity 0.15s;
+    }
+    .fighter-remove:hover { opacity: 1; }
+
+    .clear-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .clear-btn:hover {
+      background: rgba(225, 29, 72, 0.15);
+      border-color: rgba(225, 29, 72, 0.4);
+      color: #f43f5e;
+    }
+
+    /* STAGE SPLIT: MAP + CHART */
+    .arena-stage {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+    }
+
+    /* LEFT: MINI CLICKABLE MAP CARD */
+    .map-card {
+      background: rgba(14, 18, 28, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .card-headline {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .map-hint {
+      color: #f4be5e;
+      font-size: 0.68rem;
+    }
+    .mini-india-svg {
+      width: 100%;
+      height: 440px;
+      filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.8));
+    }
+    .mini-state-shape {
+      pointer-events: all;
+      vector-effect: non-scaling-stroke;
+      fill: #1e2538;
+      stroke: rgba(255, 255, 255, 0.2);
+      stroke-width: 0.75;
+      stroke-linejoin: round;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .mini-state-shape:hover {
+      fill: #334155;
+      stroke: #fff;
+      stroke-width: 1.6;
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+    }
+    .mini-state-shape.active-0 { fill: #f4be5e !important; stroke: #fff !important; stroke-width: 2px; filter: drop-shadow(0 0 12px rgba(244, 190, 94, 0.8)); }
+    .mini-state-shape.active-1 { fill: #e07a5f !important; stroke: #fff !important; stroke-width: 2px; filter: drop-shadow(0 0 12px rgba(224, 122, 95, 0.8)); }
+    .mini-state-shape.active-2 { fill: #c24b6f !important; stroke: #fff !important; stroke-width: 2px; filter: drop-shadow(0 0 12px rgba(194, 75, 111, 0.8)); }
+    .mini-state-shape.active-3 { fill: #8b3a86 !important; stroke: #fff !important; stroke-width: 2px; filter: drop-shadow(0 0 12px rgba(139, 58, 134, 0.8)); }
+    .mini-state-shape.active-4 { fill: #7c3aed !important; stroke: #fff !important; stroke-width: 2px; filter: drop-shadow(0 0 12px rgba(124, 58, 237, 0.8)); }
+    .mini-state-shape.active-5 { fill: #38bdf8 !important; stroke: #fff !important; stroke-width: 2px; filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.8)); }
+
+    /* RIGHT: TRAJECTORY CHART CARD */
+    .chart-card {
+      background: rgba(14, 18, 28, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 22px 24px 18px;
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-canvas-wrap {
+      flex: 1;
+      width: 100%;
+      height: 380px;
+      position: relative;
+    }
+    .svg-line-chart {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* BOTTOM TELEMETRY RACE CARDS */
+    .race-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 14px;
+    }
+    .rcard {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      padding: 10px 12px;
+      border-left: 3px solid #64748b;
+    }
+    .rcard-name {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rcard-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-top: 3px;
+    }
+    .rcard-sub {
+      font-size: 0.65rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .text-green { color: #10b981; }
+    .text-amber { color: #f59e0b; }
+
+    /* REAL-TIME AI COGNITIVE ANALYST PANEL */
+    .ai-analyst-panel {
+      background: linear-gradient(135deg, rgba(14, 20, 34, 0.92) 0%, rgba(10, 14, 26, 0.95) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.08);
+      margin-top: 14px;
+      backdrop-filter: blur(16px);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .ai-analyst-panel:hover {
+      border-color: rgba(56, 189, 248, 0.35);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.85), 0 0 28px rgba(56, 189, 248, 0.14);
+    }
+    .ai-analyst-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: rgba(18, 26, 44, 0.65);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .ai-badge-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ai-spark-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #38bdf8;
+      letter-spacing: 0.02em;
+    }
+    .ai-sparkle {
+      font-size: 0.85rem;
+      color: #38bdf8;
+      animation: pulseSparkle 2s infinite ease-in-out;
+    }
+    @keyframes pulseSparkle {
+      0%, 100% { opacity: 0.6; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 6px #38bdf8); }
+    }
+    .ai-wave-bars {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 14px;
+    }
+    .ai-wave-bar {
+      width: 2.5px;
+      height: 6px;
+      background: #38bdf8;
+      border-radius: 2px;
+      animation: waveBeat 1.4s infinite ease-in-out alternate;
+    }
+    .ai-wave-bar:nth-child(2) { animation-delay: 0.2s; height: 11px; }
+    .ai-wave-bar:nth-child(3) { animation-delay: 0.4s; height: 14px; }
+    .ai-wave-bar:nth-child(4) { animation-delay: 0.6s; height: 8px; }
+    @keyframes waveBeat {
+      0% { transform: scaleY(0.4); opacity: 0.5; }
+      100% { transform: scaleY(1.3); opacity: 1; }
+    }
+    .ai-live-tag {
+      font-size: 0.66rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .ai-match-status {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #f4be5e;
+      background: rgba(244, 190, 94, 0.12);
+      border: 1px solid rgba(244, 190, 94, 0.25);
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .ai-analyst-content {
+      padding: 18px 22px;
+      animation: aiFadeIn 0.3s ease;
+    }
+    @keyframes aiFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* MATCH STAGE LAYOUT */
+    .ai-stage-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 0.95fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .ai-stage-grid { grid-template-columns: 1fr; }
+    }
+    .ai-headline-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+    .ai-headline-tag {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 5px;
+    }
+    .ai-headline-text {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #f8fafc;
+      line-height: 1.45;
+    }
+    .ai-cards-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 600px) {
+      .ai-cards-row { grid-template-columns: 1fr; }
+    }
+    .ai-mini-card {
+      background: rgba(20, 26, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 9px;
+      padding: 12px 14px;
+    }
+    .ai-mc-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #cbd5e1;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ai-mc-body {
+      font-size: 0.74rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    /* RIGHT: DUEL COMPARISON SCORECARD */
+    .ai-duel-box {
+      background: rgba(20, 26, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .ai-duel-header {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #f4be5e;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .duel-item {
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .duel-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .duel-label {
+      font-size: 0.7rem;
+      color: #64748b;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .duel-bars-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .duel-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+    }
+    .duel-bar-name {
+      width: 85px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 0.7rem;
+    }
+    .duel-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    .duel-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+    .duel-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #f8fafc;
+      width: 45px;
+      text-align: right;
+    }
+
+    /* EMPTY STATE */
+    .ai-empty-prompt {
+      text-align: center;
+      padding: 24px 20px;
+    }
+    .aep-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+    .aep-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }
+    .aep-desc {
+      font-size: 0.76rem;
+      color: #94a3b8;
+      max-width: 520px;
+      margin: 0 auto 14px;
+      line-height: 1.5;
+    }
+    .aep-presets {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .aep-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .aep-pill.active-pill {
+      background: rgba(56, 189, 248, 0.22);
+      border-color: #38bdf8;
+      color: #38bdf8;
+      font-weight: 700;
+    }
+    .aep-pill:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: #38bdf8;
+      color: #fff;
+    }
+
+    /* FLOATING TOOLTIP */
+    .arena-tooltip {
+      position: fixed;
+      pointer-events: none;
+      z-index: 200;
+      background: rgba(14, 18, 26, 0.95);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 6px 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
+      display: none;
+      font-size: 0.72rem;
+      color: #f8fafc;
+      transform: translate(-50%, -125%);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header class="arena-header">
+    <div class="brand-wrap">
+      <span class="brand-logo">◈</span>
+      <div>
+        <div class="brand-title">AeroTB</div>
+        <div class="brand-sub">/ INDIA REGIONAL INTELLIGENCE</div>
+      </div>
+    </div>
+
+    <!-- UNIFIED 4 NAVIGATION PILLS -->
+    <nav class="nav-pill-group">
+      <a href="preview.html" class="nav-pill" onclick="return openAppPage(event, 'Home')">🗺️ Command Map</a>
+      <a href="compare_preview.html" class="nav-pill active">📈 Compare States</a>
+      <a href="overcome_preview.html" class="nav-pill" onclick="return openAppPage(event, 'overcome')">🚀 Road to Overcome</a>
+      <a href="/?page=knowledge" class="nav-pill" onclick="return openAppPage(event, 'knowledge')">🆘 TB Knowledge & Helplines</a>
+    </nav>
+
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:0.7rem; color:#10b981; font-weight:700;">● MoHFW Verified</span>
+    </div>
+  </header>
+
+  <!-- MAIN ARENA -->
+  <main class="arena-main">
+
+    <!-- TITLE & PRESET RIVALRY BAR -->
+    <section class="arena-hero">
+      <div class="hero-text">
+        <h1>Multi-State 5-Year Trajectories (2019–2023)</h1>
+        <p>Click states on the map or pick a rivalry to watch their notification lines battle in real time.</p>
+      </div>
+
+      <!-- FUN DERBY RIVALRIES -->
+      <div class="rivalry-bar">
+        <span class="rivalry-label">⚡ Matchups:</span>
+        <button class="preset-pill special" onclick="loadMatchup(['Uttar Pradesh', 'Maharashtra'])">🥊 Clash of Titans</button>
+        <button class="preset-pill" onclick="loadMatchup(['Tamil Nadu', 'Karnataka', 'Kerala'])">🌊 Southern Corridor</button>
+        <button class="preset-pill" onclick="loadMatchup(['Maharashtra', 'Gujarat'])">🏭 Industrial Twins</button>
+        <button class="preset-pill" onclick="loadMatchup(['Rajasthan', 'Punjab', 'Haryana'])">🌾 Northern Plains</button>
+        <button class="preset-pill" onclick="loadRandomMatchup()">🎲 Surprise 3!</button>
+      </div>
+    </section>
+
+    <!-- ACTIVE DOCK CHIPS -->
+    <div class="arena-dock">
+      <div class="dock-chips">
+        <span class="dock-status" id="dock-count">Fighters in the Ring (2/6):</span>
+        <div id="fighter-chips-container" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+      </div>
+      <div class="dock-actions">
+        <select id="state-select-dropdown" class="dock-dropdown" onchange="if(this.value){toggleFighter(this.value); this.value='';}">
+          <option value="">＋ Add State...</option>
+        </select>
+        <button class="clear-btn" onclick="clearAllFighters()">🗑️ Clear Ring</button>
+      </div>
+    </div>
+
+    <!-- STAGE: MINI MAP + LINE CHART -->
+    <div class="arena-stage">
+
+      <!-- LEFT: CLICK-TO-LIGHT MINI MAP -->
+      <div class="map-card">
+        <div class="card-headline">
+          <span>Interactive Map Picker</span>
+          <span class="map-hint">Click state to toggle</span>
+        </div>
+        <svg class="mini-india-svg" viewBox="0 0 400 480">
+          <g id="mini-map-states">
+          <path class="mini-state-shape" id="mshape-mahrshtra" data-name="Maharashtra" d="M170,295 L170,291 L171,288 L173,285 L176,286 L176,283 L173,280 L173,277 L171,273 L174,272 L174,268 L173,264 L172,261 L174,258 L172,256 L170,253 L167,254 L164,253 L161,254 L158,252 L155,253 L152,255 L149,255 L147,253 L144,255 L141,256 L138,256 L135,254 L133,251 L130,252 L127,253 L125,257 L123,260 L120,261 L119,257 L116,256 L113,257 L110,256 L107,255 L104,253 L101,252 L99,249 L96,248 L93,249 L92,253 L95,254 L93,257 L90,260 L92,263 L91,267 L88,267 L86,270 L85,274 L82,276 L80,273 L77,276 L77,279 L78,282 L78,286 L79,290 L79,294 L80,298 L81,302 L81,305 L82,309 L83,312 L84,316 L85,320 L85,323 L85,327 L86,331 L87,334 L88,337 L91,339 L94,341 L96,339 L98,336 L99,332 L97,330 L99,327 L102,326 L104,324 L106,321 L109,321 L112,321 L113,317 L116,315 L119,315 L122,316 L122,312 L124,310 L127,309 L129,306 L131,304 L133,300 L136,302 L137,299 L139,296 L141,294 L139,291 L140,288 L144,288 L145,285 L146,281 L149,279 L152,280 L154,283 L156,285 L159,284 L163,283 L165,284 L166,288 L166,292 L167,296 L170,295 Z" />
+          <path class="mini-state-shape" id="mshape-ngland" data-name="Nagaland" d="M352,179 L352,175 L349,175 L347,177 L344,178 L342,181 L339,184 L337,186 L337,190 L334,190 L332,193 L329,195 L331,199 L334,198 L336,195 L339,196 L342,196 L344,193 L345,197 L348,195 L350,192 L351,189 L351,185 L351,181 L352,179 Z" />
+          <path class="mini-state-shape" id="mshape-uttarpradesh" data-name="Uttar Pradesh" d="M159,201 L159,201 L159,201 L159,201 L159,201 L159,201 Z M137,124 L135,128 L133,130 L132,133 L131,137 L132,141 L132,144 L133,148 L134,152 L136,155 L136,158 L134,162 L134,165 L136,168 L138,171 L138,175 L135,176 L138,176 L141,175 L144,175 L147,177 L150,177 L153,178 L155,181 L155,185 L154,188 L152,191 L151,195 L147,195 L146,198 L146,202 L144,205 L145,209 L146,212 L149,213 L152,215 L154,213 L153,209 L152,206 L150,203 L149,199 L151,197 L154,199 L156,202 L158,199 L159,202 L162,202 L165,200 L168,198 L171,200 L170,203 L173,202 L176,201 L178,204 L181,204 L182,201 L185,201 L188,203 L190,205 L193,206 L195,209 L198,208 L200,211 L200,215 L201,219 L204,220 L206,218 L208,214 L208,211 L209,207 L207,204 L208,200 L210,199 L213,197 L215,194 L219,194 L222,193 L220,190 L217,189 L215,186 L217,183 L214,182 L216,179 L220,180 L218,176 L216,174 L214,170 L211,167 L208,169 L204,167 L201,167 L199,164 L196,164 L193,162 L190,160 L187,160 L184,158 L181,155 L179,153 L176,152 L174,149 L170,150 L168,147 L165,148 L162,147 L159,145 L156,144 L153,143 L151,140 L153,138 L150,137 L148,134 L145,134 L142,136 L139,134 L139,131 L141,128 L139,125 L137,124 Z" />
+          <path class="mini-state-shape" id="mshape-tamilndu" data-name="Tamil Nadu" d="M160,436 L160,436 L160,436 L160,436 L160,436 L160,436 L160,436 Z M160,436 L160,436 L160,436 L160,436 Z M160,436 L160,436 L160,436 L160,436 L160,436 L160,436 Z M160,436 L160,436 L160,436 L160,436 L160,436 L160,436 Z M160,436 L160,436 L160,436 L160,436 L160,436 L160,436 Z M160,436 L160,436 L160,436 L160,436 Z M156,435 L156,435 L156,435 L156,435 L156,435 Z M156,435 L156,435 L156,435 L156,434 L156,435 Z M156,434 L156,434 L156,434 L156,434 L156,434 L156,434 Z M154,435 L154,435 L154,435 L154,435 L154,435 L154,435 L154,435 L154,435 Z M156,435 L156,435 L156,435 L156,435 Z M156,435 L156,435 L156,435 L156,435 L156,435 Z M160,436 L160,436 L160,436 L160,436 L160,436 Z M160,436 L160,436 L160,436 L160,436 Z M160,436 L160,436 L160,436 L160,436 L160,436 L160,436 Z M134,451 L134,451 L134,451 L134,451 Z M133,450 L133,450 L133,450 L133,450 Z M145,439 L145,439 L145,439 L145,439 L145,439 L145,439 L145,439 L145,439 Z M148,437 L148,437 L148,437 L148,437 L148,437 L148,437 Z M150,436 L151,436 L151,436 L151,436 L151,436 L150,436 Z M151,436 L151,436 L151,436 L151,436 Z M151,436 L151,436 L151,436 L151,436 Z M152,436 L152,436 L152,436 L152,436 L152,436 L152,436 Z M152,436 L152,436 L152,436 L152,435 L152,436 Z M145,440 L145,440 L145,440 L145,440 L145,440 Z M145,440 L145,440 L145,440 L145,440 L145,440 L145,440 Z M145,440 L145,440 L145,440 L145,440 L145,440 L145,440 L145,440 L145,440 Z M145,440 L145,440 L145,440 L145,440 L145,440 L145,440 Z M145,439 L145,439 L145,439 L145,439 L145,439 Z M149,436 L149,436 L149,436 L149,436 Z M164,396 L165,393 L167,389 L168,386 L170,383 L170,378 L171,375 L170,371 L167,371 L165,374 L162,375 L159,375 L157,378 L154,378 L151,378 L149,382 L147,385 L145,384 L142,382 L139,384 L137,386 L136,390 L139,392 L137,395 L135,397 L132,397 L129,397 L126,400 L123,399 L121,401 L123,403 L125,406 L126,409 L128,411 L128,415 L128,419 L131,419 L133,421 L132,425 L132,429 L135,430 L133,434 L132,437 L133,441 L133,444 L132,448 L134,451 L137,451 L140,450 L142,447 L144,444 L144,440 L146,437 L149,436 L152,434 L155,434 L158,435 L155,434 L153,431 L154,427 L156,424 L157,421 L160,419 L163,419 L165,416 L165,412 L163,409 L165,406 L164,402 L164,398 L164,396 Z" />
+          <path class="mini-state-shape" id="mshape-chhattsgarh" data-name="Chhattisgarh" d="M170,295 L173,297 L175,299 L175,303 L178,305 L179,309 L182,309 L184,307 L185,303 L188,301 L190,298 L192,295 L194,292 L193,288 L192,285 L191,281 L189,278 L192,276 L195,278 L198,278 L196,276 L196,272 L195,268 L195,264 L198,262 L200,260 L203,259 L206,258 L207,255 L209,251 L210,248 L211,244 L213,243 L215,240 L218,238 L220,235 L217,232 L216,229 L215,225 L213,224 L211,220 L209,218 L206,218 L203,220 L200,219 L198,221 L194,221 L191,221 L188,221 L186,224 L189,225 L192,227 L193,231 L190,232 L188,235 L187,238 L184,240 L181,241 L180,244 L177,246 L177,250 L175,253 L175,257 L172,259 L172,263 L173,266 L174,270 L172,273 L173,276 L172,279 L175,281 L177,283 L176,287 L173,286 L171,289 L170,293 L170,295 Z" />
+          <path class="mini-state-shape" id="mshape-gujart" data-name="Gujarat" d="M58,266 L58,266 L58,266 L58,265 L58,266 Z M63,263 L63,263 L63,263 L63,263 Z M81,274 L84,274 L86,272 L87,268 L90,268 L92,266 L92,262 L89,260 L92,258 L94,255 L97,255 L94,254 L91,253 L92,249 L95,248 L95,244 L97,242 L94,240 L96,238 L99,235 L97,232 L95,230 L93,227 L90,227 L89,223 L86,221 L86,218 L83,217 L84,213 L81,211 L78,213 L75,210 L72,210 L70,208 L67,209 L64,208 L61,209 L58,208 L57,211 L55,215 L52,214 L49,213 L46,214 L41,215 L38,214 L35,215 L32,214 L29,216 L25,218 L22,221 L24,224 L26,227 L28,230 L31,232 L33,234 L36,235 L39,235 L42,235 L45,234 L47,231 L50,230 L50,234 L48,236 L46,239 L43,240 L40,242 L37,243 L34,244 L33,241 L32,245 L35,248 L37,250 L40,253 L42,256 L44,259 L47,262 L49,264 L52,265 L55,266 L58,266 L61,264 L64,263 L67,261 L70,259 L71,256 L73,253 L71,249 L73,245 L75,243 L78,244 L75,246 L76,250 L79,252 L77,255 L77,259 L78,263 L79,266 L79,270 L78,273 L81,274 Z M44,239 L45,239 L44,239 L44,239 L44,239 L44,239 Z" />
+          <path class="mini-state-shape" id="mshape-tripura" data-name="Tripura" d="M311,225 L312,222 L315,222 L317,219 L317,215 L316,212 L313,212 L312,216 L309,215 L306,217 L304,219 L303,223 L304,227 L305,230 L307,232 L310,232 L310,228 L311,225 Z" />
+          <path class="mini-state-shape" id="mshape-westbengal" data-name="West Bengal" d="M265,254 L265,254 L265,255 L265,255 L265,255 L265,254 L265,254 Z M265,253 L265,253 L265,253 L265,253 L265,253 L265,253 Z M271,254 L271,254 L271,254 L271,254 L271,254 L271,254 Z M271,253 L271,253 L271,253 L271,254 L271,254 L271,254 L271,253 Z M264,252 L264,252 L264,252 L264,252 L264,252 L264,252 L264,252 L264,252 Z M264,252 L264,252 L263,252 L263,252 L263,252 L264,252 Z M264,251 L264,251 L264,251 L264,251 L264,251 L264,251 L264,251 Z M264,251 L263,251 L263,251 L263,251 L264,251 L264,251 Z M267,250 L267,250 L267,250 L267,251 L267,251 L267,251 L267,250 Z M282,190 L282,190 L282,190 L282,190 L282,190 Z M282,189 L282,189 L282,189 L282,189 L282,189 L282,189 Z M284,187 L284,187 L284,187 L284,187 L284,187 Z M284,187 L284,187 L284,187 L284,187 L284,187 L284,187 Z M284,186 L284,186 L284,186 L284,186 L284,186 L284,186 L284,186 Z M284,186 L284,186 L284,186 L284,186 L284,186 L284,186 Z M277,185 L277,185 L277,185 L277,185 L277,185 Z M277,185 L277,185 L277,185 L277,185 L277,185 Z M277,184 L277,184 L277,184 L277,184 L277,184 L277,184 Z M276,186 L276,186 L276,186 L276,186 L276,186 L276,186 Z M276,186 L276,186 L276,186 L276,186 Z M276,186 L276,186 L276,186 L276,186 L276,186 Z M276,186 L276,186 L276,186 L276,186 L276,186 Z M276,183 L276,183 L276,183 L276,183 L276,183 L276,183 L276,183 Z M276,183 L276,183 L276,182 L276,182 L276,182 L276,183 L276,183 Z M276,182 L276,182 L276,182 L276,182 L276,182 Z M277,184 L277,184 L277,184 L277,184 L277,184 L277,184 L277,184 Z M277,184 L277,184 L277,184 L276,184 L276,184 L276,184 L277,184 Z M277,184 L277,184 L277,184 L277,184 L277,184 L277,184 Z M276,184 L276,184 L276,184 L276,184 L276,184 L276,184 L276,184 Z M276,184 L276,184 L276,184 L276,184 L276,184 Z M277,184 L277,184 L277,184 L277,184 L277,184 Z M277,184 L277,184 L277,184 L277,184 L277,184 Z M277,183 L277,183 L277,183 L277,183 Z M276,184 L276,184 L276,184 L276,184 L276,184 Z M276,183 L276,183 L276,183 L276,183 L276,183 Z M277,183 L277,183 L277,183 L277,183 L277,183 L277,183 Z M277,183 L277,183 L277,183 L277,183 L277,183 Z M277,183 L277,183 L277,183 L277,183 Z M276,183 L276,183 L276,183 L276,183 L276,183 Z M276,183 L276,183 L276,183 L276,183 L276,183 L276,183 Z M276,183 L276,183 L276,183 L276,183 L276,183 L276,183 Z M276,182 L276,182 L276,182 L276,182 L276,182 Z M266,249 L266,249 L266,249 L266,249 L266,249 L266,249 Z M267,184 L267,184 L267,184 L267,184 Z M264,171 L266,174 L266,178 L267,182 L266,185 L263,188 L263,191 L265,194 L262,197 L261,200 L263,203 L262,207 L262,210 L261,214 L259,217 L255,218 L254,221 L251,220 L249,223 L246,223 L244,226 L241,224 L238,226 L238,229 L240,231 L243,233 L246,233 L245,236 L248,239 L250,241 L248,245 L251,246 L253,249 L256,250 L258,253 L261,252 L264,249 L266,246 L267,250 L267,254 L267,250 L270,248 L272,245 L274,248 L276,246 L276,242 L276,238 L276,235 L275,231 L273,228 L272,225 L271,221 L273,218 L273,215 L270,213 L267,211 L265,209 L266,205 L269,204 L270,200 L273,200 L276,200 L274,196 L271,196 L269,193 L266,192 L266,188 L268,185 L270,182 L273,184 L276,185 L278,187 L281,188 L284,186 L286,183 L287,180 L284,178 L281,176 L278,177 L275,174 L273,172 L270,172 L267,172 L264,171 Z" />
+          <path class="mini-state-shape" id="mshape-odisha" data-name="Odisha" d="M183,309 L187,308 L189,306 L192,305 L195,304 L196,300 L198,302 L201,300 L204,300 L203,297 L206,295 L207,291 L210,290 L213,292 L215,294 L218,294 L221,292 L223,290 L227,287 L229,285 L232,283 L235,281 L238,279 L242,278 L245,277 L246,274 L249,272 L250,268 L252,264 L250,261 L251,257 L254,255 L257,254 L256,250 L253,249 L251,246 L248,244 L246,242 L243,241 L240,239 L240,243 L239,246 L236,246 L233,245 L230,247 L227,246 L229,243 L226,241 L223,241 L220,242 L217,241 L214,242 L211,244 L210,247 L209,251 L207,254 L206,257 L204,260 L201,260 L198,261 L197,264 L195,267 L196,271 L196,275 L198,277 L196,279 L193,277 L190,275 L190,279 L191,283 L193,286 L193,289 L193,293 L191,296 L189,299 L187,301 L185,304 L184,308 L183,309 Z" />
+          <path class="mini-state-shape" id="mshape-bihr" data-name="Bihar" d="M209,210 L212,211 L215,209 L218,210 L220,213 L223,212 L226,212 L229,212 L232,210 L235,210 L236,206 L239,207 L242,209 L244,212 L247,209 L250,210 L253,208 L254,204 L256,201 L258,199 L261,199 L262,196 L265,194 L263,191 L264,187 L266,185 L266,181 L264,183 L261,183 L258,182 L255,183 L252,180 L250,182 L247,181 L244,180 L241,179 L238,180 L236,177 L233,177 L230,177 L228,176 L225,174 L223,170 L220,169 L217,167 L214,168 L215,171 L216,175 L218,177 L216,179 L214,182 L217,183 L215,186 L218,189 L220,190 L223,192 L220,193 L217,193 L214,195 L212,198 L209,199 L207,202 L208,206 L209,209 L209,210 Z" />
+          <path class="mini-state-shape" id="mshape-ladkh" data-name="Ladakh" d="M95,55 L98,56 L100,58 L103,59 L106,59 L109,61 L109,65 L111,68 L114,70 L117,72 L120,74 L120,77 L123,78 L126,81 L128,84 L130,86 L133,88 L136,88 L139,86 L141,89 L143,92 L146,90 L146,94 L149,92 L152,92 L153,95 L156,94 L159,92 L162,90 L160,87 L159,83 L157,82 L154,80 L153,77 L154,73 L156,71 L159,71 L161,68 L160,64 L164,64 L166,61 L168,59 L169,55 L170,51 L169,47 L167,45 L163,45 L161,44 L158,42 L155,44 L152,44 L149,45 L146,46 L144,49 L141,50 L137,50 L134,50 L133,46 L130,45 L127,44 L126,40 L123,38 L120,37 L118,35 L115,33 L112,31 L110,28 L107,28 L104,28 L101,26 L98,27 L95,29 L92,29 L90,32 L87,31 L84,32 L81,34 L79,37 L76,38 L76,42 L78,44 L81,44 L84,47 L87,48 L90,49 L90,52 L93,54 L95,55 Z" />
+          <path class="mini-state-shape" id="mshape-rjasthn" data-name="Rajasthan" d="M133,162 L130,162 L129,159 L126,158 L123,159 L120,158 L120,162 L117,161 L118,157 L116,154 L114,152 L112,149 L112,145 L110,142 L107,141 L105,139 L102,139 L100,136 L100,132 L96,131 L92,130 L88,130 L85,134 L83,139 L81,142 L78,145 L75,147 L72,150 L70,155 L68,158 L65,161 L61,161 L57,163 L54,163 L52,159 L48,160 L45,164 L43,168 L40,171 L38,174 L38,178 L42,180 L45,180 L47,183 L45,187 L47,191 L49,193 L52,193 L53,197 L55,201 L56,204 L57,207 L60,209 L63,208 L66,208 L70,208 L72,209 L74,212 L78,213 L81,213 L82,216 L85,216 L85,220 L87,223 L89,226 L92,227 L95,229 L97,232 L100,231 L100,227 L103,225 L105,222 L105,218 L104,215 L103,211 L103,208 L103,204 L106,205 L109,203 L108,206 L111,208 L114,207 L116,209 L114,212 L115,216 L112,218 L113,221 L116,220 L118,217 L120,214 L123,215 L126,214 L128,216 L128,212 L130,210 L129,207 L128,203 L131,202 L134,202 L134,198 L131,198 L128,198 L125,198 L124,194 L125,191 L127,189 L130,186 L133,185 L135,183 L138,181 L141,179 L143,177 L141,176 L138,176 L136,173 L137,170 L135,167 L134,164 L133,162 Z" />
+          <path class="mini-state-shape" id="mshape-telangna" data-name="Telangana" d="M137,302 L137,305 L136,309 L137,313 L135,316 L136,320 L135,323 L135,327 L136,330 L136,334 L138,337 L141,337 L144,337 L147,334 L150,334 L153,334 L155,332 L157,329 L160,327 L163,325 L166,326 L167,322 L169,320 L171,323 L173,320 L176,320 L178,318 L181,316 L179,313 L177,310 L178,306 L177,303 L175,300 L173,297 L170,296 L167,295 L166,291 L166,288 L165,284 L162,283 L159,283 L156,284 L154,282 L151,280 L148,280 L145,281 L145,285 L143,288 L140,289 L141,293 L139,296 L137,299 L137,302 Z" />
+          <path class="mini-state-shape" id="mshape-andhrapradesh" data-name="Andhra Pradesh" d="M178,340 L178,340 L178,339 L178,340 Z M176,339 L176,339 L176,339 L176,339 Z M176,339 L176,339 L176,339 L176,339 Z M176,338 L176,338 L176,338 L176,338 Z M176,338 L176,338 L176,338 L176,338 Z M179,338 L179,338 L179,338 L179,338 Z M176,337 L176,337 L176,338 L176,337 L176,337 Z M176,337 L176,337 L176,337 L176,337 Z M170,371 L169,367 L168,363 L168,360 L169,356 L167,352 L167,348 L168,345 L169,341 L172,338 L175,337 L178,339 L180,336 L181,333 L184,330 L187,331 L190,330 L194,327 L195,323 L195,320 L198,317 L200,315 L203,314 L206,312 L208,309 L210,306 L213,304 L216,302 L218,299 L221,296 L222,293 L225,290 L222,291 L219,293 L216,295 L214,294 L212,291 L208,292 L206,295 L204,296 L204,300 L201,299 L199,302 L197,299 L195,301 L195,305 L192,305 L189,306 L186,308 L183,309 L180,308 L177,310 L179,313 L182,314 L180,317 L177,319 L174,319 L171,321 L173,323 L170,322 L167,321 L167,325 L164,325 L161,326 L158,327 L157,331 L154,332 L152,335 L149,335 L146,335 L143,338 L140,337 L137,337 L134,336 L131,336 L131,340 L130,343 L132,347 L130,350 L128,353 L127,357 L129,360 L132,360 L134,361 L134,365 L131,364 L129,362 L130,366 L133,367 L135,369 L138,368 L141,366 L144,367 L144,371 L147,373 L149,375 L148,379 L146,381 L147,385 L149,382 L151,378 L154,378 L157,378 L160,376 L163,375 L166,374 L168,372 L170,371 Z" />
+          <path class="mini-state-shape" id="mshape-mizoram" data-name="Mizoram" d="M316,222 L317,226 L318,229 L318,233 L319,236 L320,240 L320,243 L320,247 L323,246 L326,244 L327,241 L326,238 L327,234 L329,232 L330,228 L330,224 L330,221 L329,217 L326,217 L325,213 L322,211 L320,214 L316,214 L317,218 L316,222 L316,222 Z" />
+          <path class="mini-state-shape" id="mshape-arunchalpradesh" data-name="Arunachal Pradesh" d="M352,179 L355,178 L358,176 L360,174 L363,171 L366,170 L369,169 L372,170 L374,172 L374,168 L373,165 L375,162 L378,161 L378,157 L376,155 L373,154 L370,153 L367,154 L367,150 L368,147 L366,144 L363,144 L366,142 L364,139 L360,139 L357,141 L355,144 L352,143 L349,142 L346,140 L343,141 L340,143 L338,147 L335,149 L332,150 L329,151 L328,154 L325,156 L322,157 L321,161 L318,162 L315,162 L312,163 L309,162 L308,165 L311,167 L314,168 L313,172 L314,175 L317,175 L321,174 L324,174 L327,175 L331,175 L334,174 L336,170 L338,168 L340,165 L343,166 L346,164 L353,161 L356,161 L360,160 L359,163 L360,167 L359,170 L356,170 L354,173 L352,176 L352,179 Z" />
+          <path class="mini-state-shape" id="mshape-meghlaya" data-name="Meghalaya" d="M318,203 L321,201 L321,197 L320,194 L317,193 L315,190 L312,188 L309,190 L306,191 L303,193 L301,190 L298,190 L295,190 L292,189 L289,190 L288,194 L286,197 L289,200 L292,201 L296,201 L299,201 L302,200 L305,201 L308,201 L311,201 L314,201 L317,203 L318,203 Z" />
+          <path class="mini-state-shape" id="mshape-jhrkhand" data-name="Jharkhand" d="M207,217 L210,219 L212,221 L214,224 L215,227 L216,231 L219,233 L218,237 L216,239 L218,242 L221,242 L224,241 L227,241 L228,244 L230,247 L233,245 L236,246 L239,248 L240,245 L239,241 L243,241 L245,243 L248,244 L249,240 L247,237 L245,234 L242,233 L240,230 L238,227 L240,224 L243,226 L245,224 L248,223 L250,220 L253,221 L255,218 L258,218 L260,216 L262,212 L263,209 L263,205 L262,202 L260,199 L257,200 L254,202 L253,206 L251,209 L248,210 L246,212 L243,209 L240,207 L237,206 L236,209 L233,210 L230,211 L227,212 L224,211 L221,214 L219,211 L216,210 L213,210 L210,210 L208,213 L207,217 Z" />
+          <path class="mini-state-shape" id="mshape-assam" data-name="Assam" d="M352,174 L355,172 L358,170 L361,170 L360,166 L359,162 L357,160 L354,162 L349,163 L346,164 L343,165 L340,167 L337,169 L335,172 L333,175 L329,175 L326,175 L323,174 L320,175 L317,175 L314,176 L309,177 L306,177 L303,177 L298,177 L295,177 L292,176 L289,178 L287,181 L286,184 L286,188 L286,192 L287,195 L288,192 L290,189 L293,189 L296,190 L299,190 L302,191 L305,191 L308,189 L310,187 L313,188 L315,192 L318,192 L320,195 L322,198 L321,201 L318,203 L316,207 L316,210 L315,214 L318,216 L320,213 L323,212 L326,210 L326,206 L328,203 L330,200 L330,196 L331,193 L333,190 L336,190 L337,187 L339,184 L341,181 L343,179 L346,177 L348,175 L352,174 L352,174 Z" />
+          <path class="mini-state-shape" id="mshape-manipur" data-name="Manipur" d="M331,199 L329,202 L328,205 L326,208 L325,212 L325,216 L328,217 L331,218 L334,218 L337,219 L340,218 L341,215 L342,211 L344,208 L346,205 L346,201 L345,198 L344,194 L341,196 L338,195 L335,195 L333,198 L331,199 Z" />
+          <path class="mini-state-shape" id="mshape-karntaka" data-name="Karnataka" d="M95,340 L97,343 L97,347 L96,351 L96,354 L98,358 L99,361 L100,365 L101,369 L102,373 L102,376 L103,381 L105,383 L108,385 L110,388 L112,391 L115,393 L117,395 L120,396 L123,398 L126,400 L128,398 L132,397 L135,397 L137,395 L139,392 L136,391 L137,388 L139,384 L141,381 L144,382 L146,381 L148,378 L147,374 L147,371 L144,370 L143,366 L140,366 L137,368 L134,367 L131,367 L129,364 L132,365 L135,362 L132,360 L129,361 L129,357 L127,354 L127,350 L130,350 L132,346 L130,343 L131,340 L132,336 L135,336 L136,332 L134,330 L136,326 L135,323 L135,319 L135,315 L138,314 L135,312 L136,309 L137,305 L135,302 L132,302 L129,304 L129,307 L126,309 L124,311 L122,314 L119,315 L116,314 L112,315 L113,319 L111,321 L108,323 L105,321 L103,324 L101,327 L98,327 L97,331 L98,335 L98,338 L95,339 L95,340 Z" />
+          <path class="mini-state-shape" id="mshape-uttarkhand" data-name="Uttarakhand" d="M167,147 L168,143 L170,140 L171,137 L171,133 L174,131 L176,129 L179,127 L176,125 L174,123 L171,122 L169,119 L167,117 L164,116 L161,115 L158,113 L156,110 L153,111 L151,113 L148,112 L144,112 L141,113 L140,116 L139,120 L138,123 L140,126 L139,130 L139,133 L142,135 L145,134 L148,134 L150,137 L153,138 L153,142 L156,143 L159,145 L161,146 L164,147 L167,147 Z" />
+          <path class="mini-state-shape" id="mshape-madhyapradesh" data-name="Madhya Pradesh" d="M174,257 L175,253 L177,250 L177,247 L179,244 L181,240 L184,241 L187,239 L188,236 L190,233 L193,231 L192,227 L190,225 L187,225 L187,222 L190,220 L193,221 L196,221 L199,220 L199,216 L200,213 L201,209 L197,208 L194,208 L192,206 L190,203 L187,202 L184,201 L181,204 L178,205 L177,201 L175,202 L171,203 L170,199 L167,198 L165,200 L162,201 L159,199 L157,201 L153,200 L153,197 L151,198 L148,199 L149,202 L151,205 L151,209 L154,211 L153,214 L150,214 L147,214 L145,211 L145,207 L146,204 L147,200 L147,196 L150,195 L152,192 L153,189 L155,185 L155,182 L153,178 L151,177 L147,177 L144,177 L142,179 L139,181 L136,183 L134,184 L131,186 L128,188 L125,190 L123,193 L124,196 L127,199 L130,199 L133,198 L135,201 L132,202 L129,203 L127,206 L130,208 L130,211 L129,215 L126,214 L123,215 L120,213 L119,217 L117,219 L114,221 L111,219 L114,218 L115,215 L115,211 L116,207 L113,208 L109,208 L109,204 L106,206 L104,209 L103,212 L104,216 L104,220 L105,223 L102,225 L100,228 L99,231 L99,235 L97,238 L94,239 L96,241 L94,243 L95,247 L98,247 L99,250 L102,253 L105,253 L107,256 L111,256 L114,257 L117,256 L119,258 L122,261 L124,259 L126,256 L128,253 L131,251 L134,251 L137,253 L136,256 L139,257 L142,256 L144,254 L147,254 L150,255 L153,255 L156,253 L159,252 L162,254 L165,254 L168,253 L171,254 L173,257 L174,257 Z" />
+          <path class="mini-state-shape" id="mshape-kerala" data-name="Kerala" d="M112,398 L113,402 L115,405 L116,409 L118,415 L119,418 L120,422 L121,426 L121,430 L123,435 L124,439 L126,442 L129,445 L131,448 L133,445 L132,441 L132,438 L133,435 L135,431 L132,429 L133,425 L132,422 L132,418 L130,420 L128,417 L128,414 L127,410 L126,407 L123,406 L122,402 L123,398 L120,396 L117,395 L115,393 L112,391 L110,388 L108,385 L105,383 L105,387 L107,391 L109,395 L111,397 L112,398 Z" />
+          <path class="mini-state-shape" id="mshape-andamanandnicobarislands" data-name="Andaman and Nicobar Islands" d="M336,469 L336,465 L333,467 L335,470 L336,469 Z M335,463 L335,463 L335,463 L335,463 Z M333,462 L333,462 L333,462 L333,463 L333,463 L333,463 L333,463 L333,462 Z M334,461 L334,461 L334,461 L334,461 L334,462 L334,461 L334,461 L334,461 Z M333,460 L333,460 L333,460 L333,460 L333,460 L333,460 Z M333,460 L333,460 L333,460 L333,460 L333,460 Z M331,452 L331,452 L331,452 L331,452 Z M324,390 L324,390 L324,390 L324,390 L324,390 Z M324,389 L324,389 L324,389 L324,389 Z M324,389 L324,389 L324,389 L324,389 Z M332,444 L332,444 L332,444 L332,444 L332,444 Z M326,397 L326,397 L326,397 L326,397 L326,397 L326,397 L326,397 L326,397 Z M326,392 L326,392 L326,392 L326,392 Z M326,391 L326,391 L326,391 L326,391 Z M326,391 L326,391 L326,391 L326,391 Z M326,374 L326,374 L326,374 L326,374 Z M322,394 L322,394 L322,394 L322,394 L322,394 L322,394 L322,394 L322,394 Z M322,407 L322,407 L322,406 L322,407 L322,407 L322,407 Z M322,399 L322,399 L322,399 L322,399 L322,399 L322,399 Z M322,399 L322,399 L322,399 L322,399 L322,399 L322,399 Z M322,394 L322,395 L322,394 L322,394 Z M322,394 L322,394 L322,394 L322,394 L322,394 L322,394 Z M322,392 L322,392 L322,392 L322,392 Z M322,392 L322,392 L322,392 L322,392 L322,392 L322,392 Z M322,391 L322,391 L322,391 L322,391 L322,391 L322,392 L322,391 Z M322,391 L322,391 L322,391 L322,391 L322,391 Z M319,415 L320,412 L318,415 L319,415 Z M320,410 L320,410 L320,410 L320,410 L320,410 L320,410 L320,410 L320,410 Z M316,409 L316,409 L315,409 L315,409 L315,409 L316,409 L316,409 L316,409 Z M322,407 L322,407 L322,407 L322,407 L322,407 Z M321,406 L321,406 L321,406 L321,406 L321,406 L321,406 L321,406 L321,406 Z M320,403 L320,403 L320,403 L320,403 L320,403 L320,403 Z M320,403 L320,403 L320,403 L320,403 L320,403 Z M320,401 L320,401 L320,401 L320,401 L320,401 Z M321,401 L321,401 L321,401 L321,401 Z M321,401 L321,401 L321,401 L321,401 Z M320,400 L320,400 L320,400 L320,400 L320,400 L320,400 L320,400 Z M320,400 L320,400 L320,400 L320,400 Z M320,400 L320,400 L320,400 L320,400 L320,400 Z M322,394 L319,395 L320,399 L322,396 L322,394 Z M320,395 L320,395 L320,395 L320,395 L320,395 L320,395 L320,395 L320,395 Z M320,395 L320,395 L320,395 L320,395 L320,395 Z M321,399 L321,399 L321,399 L321,399 L321,399 L321,399 Z M322,395 L322,395 L322,395 L322,395 Z M321,391 L321,391 L321,391 L321,391 L321,391 Z M322,390 L322,390 L322,390 L322,390 L322,390 L322,390 Z M323,391 L323,391 L323,391 L323,390 L323,390 L323,390 L323,390 L323,391 Z M324,390 L324,390 L324,390 L324,390 L324,390 L324,390 Z M322,390 L322,390 L322,390 L322,390 L322,390 L322,390 L322,390 Z M324,390 L324,390 L324,390 L324,390 L324,390 L324,390 Z M323,390 L323,390 L323,390 L323,390 L323,390 L323,390 Z M323,388 L323,388 L323,388 L323,388 L323,388 Z M322,390 L322,390 L322,390 L322,390 Z M322,390 L322,390 L322,390 L322,390 Z M322,384 L322,384 L322,384 L322,384 Z M322,383 L322,383 L322,383 L322,383 L322,383 Z M321,390 L321,390 L321,390 L321,390 L321,390 Z M322,390 L322,390 L322,390 L322,390 L322,390 Z M321,386 L321,386 L321,386 L321,386 L321,386 L321,386 L321,386 L321,386 Z M320,394 L320,394 L320,394 L320,394 L320,394 Z M321,383 L321,383 L321,383 L321,383 Z M321,380 L321,380 L321,380 L321,380 Z M322,385 L322,385 L322,385 L322,385 Z M321,385 L321,385 L321,385 L321,385 L321,385 Z M322,384 L322,384 L322,384 L322,384 L322,384 Z M323,388 L323,388 L323,388 L323,388 L323,388 L323,388 L323,388 L323,388 Z M323,388 L324,385 L324,381 L322,384 L321,387 L323,388 Z M322,382 L322,382 L322,382 L322,382 L322,382 Z M322,381 L322,381 L322,381 L322,381 L322,381 Z M322,381 L322,381 L322,381 L322,381 L322,381 L322,381 L322,381 L322,381 Z M322,381 L322,381 L322,381 L322,381 L322,381 L322,381 L322,381 Z M322,378 L322,378 L322,378 L322,378 Z M321,380 L321,380 L321,380 L321,380 Z M321,380 L321,380 L321,380 L321,380 L321,380 Z M321,380 L321,380 L321,380 L321,380 Z M322,381 L322,381 L322,380 L322,380 L322,380 L322,381 Z M322,380 L322,380 L322,380 L322,380 L322,380 L322,381 L322,380 L322,380 Z M323,377 L323,377 L323,377 L323,377 L323,377 Z M324,371 L324,371 L324,371 L324,371 L324,371 L324,371 Z M324,388 L324,388 L324,388 L324,388 L324,388 Z M324,388 L324,388 L324,388 L324,388 L324,388 L324,388 Z M325,390 L325,390 L325,390 L325,390 L325,390 L325,390 Z M326,389 L326,389 L326,389 L326,389 Z M325,379 L325,379 L325,379 L325,379 Z M326,376 L326,376 L326,376 L326,376 Z M324,381 L324,381 L324,381 L324,381 Z M324,381 L324,381 L324,381 L324,381 L324,381 Z M324,381 L324,381 L324,381 L324,381 L324,381 L324,381 L324,381 L324,381 Z M324,380 L324,380 L324,380 L324,380 Z M324,379 L324,379 L324,379 L324,379 L324,379 Z M324,379 L324,379 L324,379 L324,379 L324,379 Z M324,378 L324,378 L324,378 L324,378 L324,378 Z M324,378 L324,378 L324,378 L324,378 Z M324,371 L323,375 L323,379 L326,377 L325,374 L324,371 Z M326,376 L326,376 L326,376 L326,376 Z M326,375 L326,375 L326,375 L326,375 L326,375 L326,375 Z M325,374 L325,374 L325,374 L325,374 Z M325,374 L325,374 L325,374 L325,374 Z M325,374 L325,374 L325,374 L325,374 L325,374 L325,374 L325,374 Z M326,374 L326,374 L326,374 L326,374 Z M326,374 L326,374 L326,374 L326,374 Z M326,373 L326,373 L326,373 L326,373 L326,373 L326,373 L326,373 Z M326,373 L326,373 L326,373 L326,373 L326,373 L326,373 Z M326,373 L326,373 L326,373 L326,373 L326,373 L326,373 L326,373 Z M325,374 L325,374 L325,374 L325,374 Z M324,372 L324,372 L324,372 L324,372 L324,372 L324,372 L324,372 Z M324,372 L324,372 L324,372 L324,371 L324,371 L324,372 Z M326,371 L326,371 L326,371 L326,371 L326,371 L326,371 Z M325,371 L325,371 L325,371 L325,371 L325,371 L325,371 Z" />
+          <path class="mini-state-shape" id="mshape-himchalpradesh" data-name="Himachal Pradesh" d="M137,124 L140,123 L139,119 L140,116 L142,113 L145,112 L148,112 L151,113 L154,114 L152,111 L151,107 L151,104 L151,100 L149,97 L148,94 L147,90 L144,91 L141,89 L139,86 L136,88 L133,88 L130,86 L128,84 L125,83 L122,84 L119,86 L116,87 L116,91 L117,95 L114,97 L115,100 L117,103 L118,106 L120,109 L123,110 L125,112 L126,116 L129,117 L131,119 L132,123 L135,123 L137,124 Z" />
+          <path class="mini-state-shape" id="mshape-jammuandkashmr" data-name="Jammu and Kashmir" d="M95,55 L94,58 L91,60 L89,63 L86,64 L87,68 L88,72 L88,76 L88,79 L89,83 L91,86 L94,87 L96,88 L99,89 L101,92 L104,94 L107,94 L110,96 L113,95 L116,93 L116,89 L119,87 L121,85 L124,83 L127,83 L125,80 L122,78 L120,75 L118,72 L115,71 L113,68 L110,67 L110,63 L108,60 L105,59 L102,59 L100,56 L97,56 L95,55 Z" />
+          <path class="mini-state-shape" id="mshape-punjab" data-name="Punjab" d="M100,131 L103,130 L105,132 L108,134 L111,133 L114,133 L117,134 L120,132 L121,129 L124,129 L126,126 L128,124 L128,120 L127,117 L125,114 L123,111 L120,111 L119,108 L117,104 L116,101 L113,100 L115,96 L112,97 L109,98 L106,100 L103,101 L100,103 L100,107 L100,110 L100,114 L98,117 L96,120 L94,122 L93,126 L92,130 L96,131 L100,131 Z" />
+          <path class="mini-state-shape" id="mshape-haryna" data-name="Haryana" d="M134,152 L131,152 L128,151 L129,148 L132,147 L132,143 L131,139 L131,136 L132,132 L134,129 L136,126 L134,124 L131,122 L130,119 L128,116 L128,120 L128,124 L126,126 L124,129 L121,128 L120,132 L117,134 L115,133 L111,133 L109,135 L107,133 L104,131 L101,131 L99,134 L101,137 L104,139 L106,141 L109,141 L111,144 L112,147 L113,151 L115,153 L118,155 L117,159 L119,162 L121,158 L124,157 L127,158 L129,160 L129,164 L132,162 L135,162 L136,158 L136,154 L134,152 Z" />
+          <path class="mini-state-shape" id="mshape-puducherry" data-name="Puducherry" d="M163,397 L163,397 L163,397 L163,397 L163,397 Z M163,396 L163,396 L163,396 L163,396 L163,396 L163,396 Z M164,394 L164,394 L164,394 L164,394 L164,394 L164,394 L164,394 Z M164,410 L164,410 L164,410 L164,410 L164,410 Z M163,410 L163,410 L163,410 L163,410 L163,410 Z M165,394 L165,393 L165,393 L165,393 L165,394 L164,394 L165,394 Z M195,327 L195,327 L195,327 L195,327 L195,327 L195,327 L195,327 Z" />
+          <path class="mini-state-shape" id="mshape-lakshadweep" data-name="Lakshadweep" d="M81,449 L81,449 L81,449 L81,449 Z M72,423 L72,423 L72,423 L72,423 L72,423 Z M73,422 L73,422 L73,422 L73,422 Z M73,421 L73,421 L73,421 L73,421 Z M71,411 L71,411 L71,411 L71,411 Z M73,409 L73,409 L73,409 L73,409 L73,409 L73,409 Z M73,409 L73,409 L73,409 L73,409 Z M73,409 L73,409 L73,409 L73,409 Z M73,409 L73,409 L73,409 L73,409 Z M71,400 L71,400 L71,400 L71,400 L71,400 L71,400 Z M89,422 L89,422 L89,422 L89,422 Z M77,399 L77,399 L78,398 L78,398 L77,399 L77,399 L77,399 L77,399 Z" />
+          <path class="mini-state-shape" id="mshape-delhi" data-name="Delhi" d="M132,147 L129,147 L128,151 L131,152 L134,152 L133,148 L132,147 Z" />
+          <path class="mini-state-shape" id="mshape-sikkim" data-name="Sikkim" d="M264,171 L267,172 L270,172 L273,172 L275,168 L274,165 L275,161 L273,158 L270,159 L267,160 L266,163 L265,167 L264,170 L264,171 Z" />
+          <path class="mini-state-shape" id="mshape-ddraandnagarhavelianddamnanddiu" data-name="Dadra and Nagar Haveli and Daman and Diu" d="M84,275 L82,272 L81,275 L84,275 L84,275 Z" />
+          <path class="mini-state-shape" id="mshape-goa" data-name="Goa" d="M89,339 L90,343 L92,347 L94,350 L97,350 L97,346 L97,342 L94,341 L92,338 L89,339 Z" />
+          <path class="mini-state-shape" id="mshape-chandigarh" data-name="Chandigarh" d="M127,119 L130,119 L130,122 L127,122 Z" />
+        </g>
+        </svg>
+      </div>
+
+      <!-- RIGHT: SVG LINE ARENA -->
+      <div class="chart-card">
+        <div class="card-headline">
+          <span>5-Year Case Volume Trajectory</span>
+          <span style="font-family:'JetBrains Mono'; color:#f4be5e;">2019 → 2023</span>
+        </div>
+        <div class="chart-canvas-wrap">
+          <svg class="svg-line-chart" id="line-chart-svg" viewBox="0 0 760 360"></svg>
+        </div>
+
+        <!-- RACE TELEMETRY CARDS -->
+        <div class="race-cards" id="race-cards-container"></div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM: REAL-TIME AI TRAJECTORY ANALYST -->
+    <section class="ai-analyst-panel">
+      <div class="ai-analyst-header">
+        <div class="ai-badge-group">
+          <div class="ai-spark-pill">
+            <span class="ai-sparkle">✦</span>
+            <span>AeroTB AI Comparison Helper</span>
+          </div>
+          <div class="ai-wave-bars" title="Real-time cognitive audio stream">
+            <span class="ai-wave-bar"></span>
+            <span class="ai-wave-bar"></span>
+            <span class="ai-wave-bar"></span>
+            <span class="ai-wave-bar"></span>
+          </div>
+          <span class="ai-live-tag">PLAIN-ENGLISH SUMMARY</span>
+        </div>
+
+        <div class="ai-status-wrap">
+          <span class="ai-match-status" id="ai-match-status">Monitoring Ring</span>
+        </div>
+      </div>
+
+      <div class="ai-analyst-content" id="ai-analyst-content">
+        <!-- Dynamically rendered in real-time -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TOOLTIP -->
+  <div class="arena-tooltip" id="arena-tooltip"></div>
+
+  <script>
+    const STATES_DATA = {"Andaman and Nicobar Islands": {"name": "Andaman and Nicobar Islands", "clean": "andamanandnicobarislands", "vals": [378.0, 424.0, 476.0, 521.0, 518.0], "latest": 518, "pct": 37.0, "rank": 34}, "Andhra Pradesh": {"name": "Andhra Pradesh", "clean": "andhrapradesh", "vals": [83094.0, 60696.0, 86127.0, 92118.0, 88229.0], "latest": 88229, "pct": 6.2, "rank": 9}, "Arunachal Pradesh": {"name": "Arunachal Pradesh", "clean": "arunachalpradesh", "vals": [1283.0, 2133.0, 2425.0, 2381.0, 1930.0], "latest": 1930, "pct": 50.4, "rank": 29}, "Assam": {"name": "Assam", "clean": "assam", "vals": [23153.0, 23411.0, 28276.0, 38940.0, 46094.0], "latest": 46094, "pct": 99.1, "rank": 17}, "Bihar": {"name": "Bihar", "clean": "bihar", "vals": [64870.0, 67188.0, 104223.0, 127882.0, 146889.0], "latest": 146889, "pct": 126.4, "rank": 5}, "Chandigarh": {"name": "Chandigarh", "clean": "chandigarh", "vals": [3250.0, 2617.0, 2990.0, 3578.0, 3617.0], "latest": 3617, "pct": 11.3, "rank": 25}, "Chhattisgarh": {"name": "Chhattisgarh", "clean": "chhattisgarh", "vals": [35152.0, 24333.0, 28791.0, 35230.0, 35425.0], "latest": 35425, "pct": 0.8, "rank": 18}, "Dadra and Nagar Haveli and Daman and Diu": {"name": "Dadra and Nagar Haveli and Daman and Diu", "clean": "dadraandnagarhavelianddamananddiu", "vals": [562.0, 729.0, 748.0, 914.0, 863.0], "latest": 863, "pct": 53.6, "rank": 33}, "Delhi": {"name": "Delhi", "clean": "delhi", "vals": [405.0, 51730.0, 65654.0, 71328.0, 71731.0], "latest": 71731, "pct": 17611.4, "rank": 12}, "Goa": {"name": "Goa", "clean": "goa", "vals": [47646.0, 1530.0, 1827.0, 1947.0, 1905.0], "latest": 1905, "pct": -96.0, "rank": 30}, "Gujarat": {"name": "Gujarat", "clean": "gujarat", "vals": [1685.0, 112210.0, 136129.0, 142232.0, 135370.0], "latest": 135370, "pct": 7933.8, "rank": 6}, "Haryana": {"name": "Haryana", "clean": "haryana", "vals": [134115.0, 54134.0, 65152.0, 74024.0, 77752.0], "latest": 77752, "pct": -42.0, "rank": 10}, "Himachal Pradesh": {"name": "Himachal Pradesh", "clean": "himachalpradesh", "vals": [53760.0, 13505.0, 14607.0, 16340.0, 15861.0], "latest": 15861, "pct": -70.5, "rank": 21}, "Jammu and Kashmir": {"name": "Jammu and Kashmir", "clean": "jammuandkashmir", "vals": [17389.0, 7598.0, 9659.0, 11407.0, 11205.0], "latest": 11205, "pct": -35.6, "rank": 22}, "Jharkhand": {"name": "Jharkhand", "clean": "jharkhand", "vals": [7984.0, 31770.0, 39919.0, 51890.0, 58115.0], "latest": 58115, "pct": 627.9, "rank": 15}, "Karnataka": {"name": "Karnataka", "clean": "karnataka", "vals": [31027.0, 59655.0, 67424.0, 75208.0, 75958.0], "latest": 75958, "pct": 144.8, "rank": 11}, "Kerala": {"name": "Kerala", "clean": "kerala", "vals": [71171.0, 18794.0, 20105.0, 21945.0, 21022.0], "latest": 21022, "pct": -70.5, "rank": 20}, "Ladakh": {"name": "Ladakh", "clean": "ladakh", "vals": [21142.0, 189.0, 256.0, 315.0, 301.0], "latest": 301, "pct": -98.6, "rank": 35}, "Lakshadweep": {"name": "Lakshadweep", "clean": "lakshadweep", "vals": [16.0, 19.0, 20.0, 21.0, 13.0], "latest": 13, "pct": -18.8, "rank": 36}, "Madhya Pradesh": {"name": "Madhya Pradesh", "clean": "madhyapradesh", "vals": [121523.0, 114977.0, 151251.0, 171407.0, 169107.0], "latest": 169107, "pct": 39.2, "rank": 3}, "Maharashtra": {"name": "Maharashtra", "clean": "maharashtra", "vals": [169928.0, 144317.0, 183178.0, 222145.0, 213034.0], "latest": 213034, "pct": 25.4, "rank": 2}, "Manipur": {"name": "Manipur", "clean": "manipur", "vals": [909.0, 767.0, 1164.0, 1951.0, 2031.0], "latest": 2031, "pct": 123.4, "rank": 28}, "Meghalaya": {"name": "Meghalaya", "clean": "meghalaya", "vals": [2970.0, 3175.0, 3354.0, 3811.0, 4199.0], "latest": 4199, "pct": 41.4, "rank": 23}, "Mizoram": {"name": "Mizoram", "clean": "mizoram", "vals": [1697.0, 1736.0, 1741.0, 2076.0, 2224.0], "latest": 2224, "pct": 31.1, "rank": 27}, "Nagaland": {"name": "Nagaland", "clean": "nagaland", "vals": [1454.0, 2100.0, 2951.0, 3514.0, 3794.0], "latest": 3794, "pct": 160.9, "rank": 24}, "Odisha": {"name": "Odisha", "clean": "odisha", "vals": [47645.0, 43018.0, 49919.0, 57738.0, 60112.0], "latest": 60112, "pct": 26.2, "rank": 14}, "Puducherry": {"name": "Puducherry", "clean": "puducherry", "vals": [1629.0, 1244.0, 1383.0, 1512.0, 1578.0], "latest": 1578, "pct": -3.1, "rank": 31}, "Punjab": {"name": "Punjab", "clean": "punjab", "vals": [52785.0, 42965.0, 46341.0, 52671.0, 52724.0], "latest": 52724, "pct": -0.1, "rank": 16}, "Rajasthan": {"name": "Rajasthan", "clean": "rajasthan", "vals": [112197.0, 119619.0, 134955.0, 153487.0, 148007.0], "latest": 148007, "pct": 31.9, "rank": 4}, "Sikkim": {"name": "Sikkim", "clean": "sikkim", "vals": [1301.0, 1290.0, 1356.0, 1376.0, 1337.0], "latest": 1337, "pct": 2.8, "rank": 32}, "Tamil Nadu": {"name": "Tamil Nadu", "clean": "tamilnadu", "vals": [79696.0, 64981.0, 80541.0, 92689.0, 97022.0], "latest": 97022, "pct": 21.7, "rank": 7}, "Telangana": {"name": "Telangana", "clean": "telangana", "vals": [32098.0, 58427.0, 57456.0, 68626.0, 69431.0], "latest": 69431, "pct": 116.3, "rank": 13}, "Tripura": {"name": "Tripura", "clean": "tripura", "vals": [1500.0, 1702.0, 2588.0, 3112.0, 3426.0], "latest": 3426, "pct": 128.4, "rank": 26}, "Uttar Pradesh": {"name": "Uttar Pradesh", "clean": "uttarpradesh", "vals": [212923.0, 266319.0, 401375.0, 490981.0, 620325.0], "latest": 620325, "pct": 191.3, "rank": 1}, "Uttarakhand": {"name": "Uttarakhand", "clean": "uttarakhand", "vals": [7884.0, 10053.0, 20386.0, 26287.0, 25574.0], "latest": 25574, "pct": 224.4, "rank": 19}, "West Bengal": {"name": "West Bengal", "clean": "westbengal", "vals": [89229.0, 71711.0, 85296.0, 94326.0, 95221.0], "latest": 95221, "pct": 6.7, "rank": 8}};
+    const PALETTE = ["#f4be5e", "#e07a5f", "#c24b6f", "#8b3a86", "#7c3aed", "#38bdf8"];
+    const YEARS = [2019, 2020, 2021, 2022, 2023];
+
+    // Default ring states
+    let activeFighters = ["Maharashtra", "Uttar Pradesh"];
+
+    // DOM references
+    const chipsContainer = document.getElementById('fighter-chips-container');
+    const dockCount = document.getElementById('dock-count');
+    const chartSvg = document.getElementById('line-chart-svg');
+    const raceContainer = document.getElementById('race-cards-container');
+    // rosterGrid removed
+    const tooltip = document.getElementById('arena-tooltip');
+
+    // Build State Dropdown Options
+    const sortedList = Object.values(STATES_DATA).sort((a,b) => a.rank - b.rank);
+    const selectDropdown = document.getElementById('state-select-dropdown');
+    sortedList.forEach(s => {
+      if (selectDropdown) {
+        const opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = `#${s.rank} · ${s.name}`;
+        selectDropdown.appendChild(opt);
+      }
+    });
+
+    // Bind Map Paths
+    document.querySelectorAll('.mini-state-shape').forEach(shape => {
+      const sName = shape.getAttribute('data-name');
+      shape.onclick = () => toggleFighter(sName);
+      shape.onmouseenter = (e) => showTooltip(e, sName);
+      shape.onmousemove = moveTooltip;
+      shape.onmouseleave = hideTooltip;
+    });
+
+    function toggleFighter(rawName) {
+      const sName = getCleanStateKey(rawName);
+      const idx = activeFighters.indexOf(sName);
+      if (idx !== -1) {
+        activeFighters.splice(idx, 1);
+      } else {
+        if (activeFighters.length >= 6) {
+          alert("Maximum 6 states can be in the comparison ring at once.");
+          return;
+        }
+        activeFighters.push(sName);
+      }
+      updateArena();
+    }
+
+    function loadMatchup(statesList) {
+      activeFighters = [...statesList];
+      updateArena();
+    }
+
+    function loadRandomMatchup() {
+      const all = Object.keys(STATES_DATA);
+      const shuffled = all.sort(() => 0.5 - Math.random());
+      activeFighters = shuffled.slice(0, 3);
+      updateArena();
+    }
+
+    function clearAllFighters() {
+      activeFighters = [];
+      updateArena();
+    }
+
+    
+    
+    // AI COMPARISON HELPER (SIMPLE, NATURAL ENGLISH)
+    let aiSubTopic = 'story'; // 'story', 'twist', 'covid'
+
+    function setAiTopic(topic) {
+      aiSubTopic = topic;
+      updateAiAnalyst();
+    }
+
+    function getStateDescription(sName) {
+      if (sName === 'Uttar Pradesh') return 'Has the most cases in India due to its large population (over 620,000 cases in 2023).';
+      if (sName === 'Maharashtra') return 'A major industrial state where both government hospitals and private doctors report high numbers of cases.';
+      if (sName === 'Tamil Nadu' || sName === 'Kerala') return 'Known for strong healthcare systems that routinely test TB patients for diabetes.';
+      if (sName === 'Rajasthan' || sName === 'Madhya Pradesh') return 'Large states with wide rural areas focusing on doorstep testing and nutrition support.';
+      if (sName === 'Bihar' || sName === 'West Bengal') return 'High-density states that have rapidly expanded patient testing over the last few years.';
+      if (sName === 'Gujarat') return 'An active industrial hub with heavy testing at primary health centers.';
+      if (sName === 'Goa' || sName === 'Sikkim' || sName === 'Ladakh') return 'Smaller regions with low case numbers that are working towards completely eliminating TB.';
+      return 'Actively testing and treating patients through the government\'s free Ni-kshay program.';
+    }
+
+    function updateAiAnalyst() {
+      const container = document.getElementById('ai-analyst-content');
+      const statusBadge = document.getElementById('ai-match-status');
+      if (!container) return;
+
+      // 0 STATES SELECTED
+      if (activeFighters.length === 0) {
+        if (statusBadge) statusBadge.textContent = "Waiting for Selection";
+        container.innerHTML = `
+          <div class="ai-empty-prompt">
+            <div class="aep-icon">📊</div>
+            <div class="aep-title">Choose States to Compare</div>
+            <div class="aep-desc">Click any state on the map above, or try one of the quick matchups below. I will explain how their numbers changed over 5 years, why cases dipped in 2020, and what the trends mean in simple words.</div>
+            <div class="aep-presets">
+              <span class="aep-pill" onclick="loadMatchup(['Uttar Pradesh', 'Maharashtra'])">UP vs Maharashtra</span>
+              <span class="aep-pill" onclick="loadMatchup(['Tamil Nadu', 'Karnataka', 'Kerala'])">Southern States</span>
+              <span class="aep-pill" onclick="loadMatchup(['Maharashtra', 'Gujarat'])">Maharashtra vs Gujarat</span>
+              <span class="aep-pill" onclick="loadRandomMatchup()">🎲 Pick Random 3</span>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 1 STATE SELECTED
+      if (activeFighters.length === 1) {
+        const s = STATES_DATA[activeFighters[0]] || {};
+        if (statusBadge) statusBadge.textContent = s.name;
+
+        const c2019 = s.vals ? s.vals[0] : 0;
+        const c2020 = s.vals ? s.vals[1] : 0;
+        const c2023 = s.latest || 0;
+        const dipPct = Math.abs(Math.round((c2020 - c2019) / Math.max(1, c2019) * 100));
+        const rebPct = Math.round((c2023 - c2020) / Math.max(1, c2020) * 100);
+        const desc = getStateDescription(s.name);
+
+        container.innerHTML = `
+          <div class="ai-stage-grid">
+            <div>
+              <div class="ai-headline-box">
+                <div class="ai-headline-tag">Quick Summary</div>
+                <div class="ai-headline-text">
+                  <strong>${s.name}</strong> ranks <strong>#${s.rank} in India</strong>, reporting <strong>${(s.latest || 0).toLocaleString()}</strong> TB patients in 2023.
+                </div>
+                <div style="font-size:0.76rem; color:#94a3b8; margin-top:5px; line-height:1.4;">${desc}</div>
+              </div>
+
+              <div class="ai-cards-row">
+                <div class="ai-mini-card">
+                  <div class="ai-mc-title">😷 Why cases dropped in 2020</div>
+                  <div class="ai-mc-body">Cases fell by about ${dipPct}% in 2020. This was not because TB went away—COVID-19 lockdowns closed clinics, so sick people simply could not visit a doctor to get tested.</div>
+                </div>
+                <div class="ai-mini-card">
+                  <div class="ai-mc-title">📈 The Rebound (2021–2023)</div>
+                  <div class="ai-mc-body">After clinics reopened, reported cases rose by +${rebPct}%. Health workers went out into communities to find and help people who missed checkups during the pandemic.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ai-duel-box">
+              <div class="ai-duel-header">
+                <span>State Numbers</span>
+                <span style="color:#f4be5e;">Rank #${s.rank}</span>
+              </div>
+              <div class="duel-item">
+                <div class="duel-label"><span>2023 Total Cases</span><strong style="color:#f4be5e;">${c2023.toLocaleString()}</strong></div>
+                <div class="duel-track"><div class="duel-fill" style="width:${Math.min(100, Math.round(c2023/620325*100))}%; background:#f4be5e;"></div></div>
+              </div>
+              <div class="duel-item">
+                <div class="duel-label"><span>Rise Since 2020 Low</span><strong style="color:#10b981;">+${rebPct}%</strong></div>
+                <div class="duel-track"><div class="duel-fill" style="width:${Math.min(100, Math.max(12, rebPct))}%; background:#10b981;"></div></div>
+              </div>
+              <div style="font-size:0.72rem; color:#38bdf8; margin-top:12px; line-height:1.4; text-align:center;">
+                👉 <em>Click another state on the map to compare them side by side!</em>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 2 OR MORE STATES SELECTED
+      const fighters = activeFighters.map(name => STATES_DATA[name]).filter(Boolean);
+      fighters.sort((a,b) => b.latest - a.latest);
+      const leader = fighters[0];
+      const runnerUp = fighters[1];
+      const ratio = (leader.latest / Math.max(1, runnerUp.latest)).toFixed(1);
+
+      const sortedByGrowth = [...fighters].sort((a,b) => b.pct - a.pct);
+      const fastest = sortedByGrowth[0];
+
+      const reboundData = fighters.map(s => {
+        const c20 = s.vals ? s.vals[1] : 1;
+        const c23 = s.latest || 1;
+        const reb = Math.round((c23 - c20) / Math.max(1, c20) * 100);
+        return { name: s.name, reb };
+      }).sort((a,b) => b.reb - a.reb);
+      const comebackState = reboundData[0];
+
+      if (statusBadge) statusBadge.textContent = `${activeFighters.length} States Compared`;
+
+      // Subtopics content
+      let subtopicHtml = '';
+      if (aiSubTopic === 'twist') {
+        subtopicHtml = `
+          <div class="ai-cards-row">
+            <div class="ai-mini-card" style="border-color:rgba(56,189,248,0.25);">
+              <div class="ai-mc-title">💡 Why a rising line can be good</div>
+              <div class="ai-mc-body">In TB control, an upward line usually means health systems are working better. It means doctors are finding patients who were sick at home and giving them free treatment instead of letting the disease spread.</div>
+            </div>
+            <div class="ai-mini-card">
+              <div class="ai-mc-title">⚠️ What a flat line might mean</div>
+              <div class="ai-mc-body">If a state's line stays completely flat year after year, it can mean not enough testing is being done in rural clinics, so some patients may remain undiagnosed.</div>
+            </div>
+          </div>
+        `;
+      } else if (aiSubTopic === 'covid') {
+        subtopicHtml = `
+          <div class="ai-cards-row">
+            <div class="ai-mini-card" style="border-color:rgba(239,68,68,0.25);">
+              <div class="ai-mc-title">😷 What happened in 2020?</div>
+              <div class="ai-mc-body">When the COVID-19 pandemic arrived, lockdowns closed hospital OPDs. Many TB testing machines were used to test for COVID instead. Patients stayed home, so reported numbers dropped sharply.</div>
+            </div>
+            <div class="ai-mini-card">
+              <div class="ai-mc-title">📈 The Catch-Up in 2022–2023</div>
+              <div class="ai-mc-body">The sharp climb after 2021 shows health teams catching up on missed tests and private clinics reporting their patients to the government database (Ni-kshay).</div>
+            </div>
+          </div>
+        `;
+      } else {
+        // default story
+        subtopicHtml = `
+          <div class="ai-cards-row">
+            <div class="ai-mini-card">
+              <div class="ai-mc-title">📊 Caseload Comparison</div>
+              <div class="ai-mc-body"><strong>${leader.name}</strong> reports about <strong>${ratio}×</strong> more cases than <strong>${runnerUp.name}</strong>. Because ${leader.name} has a much larger population, it naturally handles a higher volume of patients.</div>
+            </div>
+            <div class="ai-mini-card">
+              <div class="ai-mc-title">🚀 Fastest Recovery: ${comebackState.name}</div>
+              <div class="ai-mc-body"><strong>${comebackState.name}</strong> had the biggest bounce since the 2020 lockdown, rising by <strong>+${comebackState.reb}%</strong>. This shows active community screening to catch up on missed patients.</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Progress bars
+      let duelBarsHtml = '';
+      const maxVolume = leader.latest || 1;
+      fighters.slice(0, 4).forEach((s) => {
+        const color = PALETTE[activeFighters.indexOf(s.name) % PALETTE.length];
+        const w = Math.min(100, Math.max(8, Math.round(s.latest / maxVolume * 100)));
+        duelBarsHtml += `
+          <div class="duel-bar-row">
+            <span class="duel-bar-name" style="color:${color}; font-weight:700;">● ${s.name}</span>
+            <div class="duel-track">
+              <div class="duel-fill" style="width:${w}%; background:${color};"></div>
+            </div>
+            <span class="duel-val">${(s.latest >= 1000 ? (s.latest/1000).toFixed(0) + 'k' : s.latest)}</span>
+          </div>
+        `;
+      });
+
+      container.innerHTML = `
+        <div class="ai-stage-grid">
+          <div>
+            <div class="ai-headline-box">
+              <div class="ai-headline-tag">Main Takeaway</div>
+              <div class="ai-headline-text">
+                <strong>${leader.name}</strong> handles the highest total cases (${leader.latest.toLocaleString()}), while <strong>${fastest.name}</strong> had the fastest 5-year growth (+${fastest.pct}% since 2019).
+              </div>
+              <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
+                <span class="aep-pill ${aiSubTopic === 'story' ? 'active-pill' : ''}" onclick="setAiTopic('story')">📊 General Overview</span>
+                <span class="aep-pill ${aiSubTopic === 'covid' ? 'active-pill' : ''}" onclick="setAiTopic('covid')">😷 The 2020 COVID Dip</span>
+                <span class="aep-pill ${aiSubTopic === 'twist' ? 'active-pill' : ''}" onclick="setAiTopic('twist')">💡 Why a Rising Line is Good</span>
+              </div>
+            </div>
+
+            ${subtopicHtml}
+          </div>
+
+          <div class="ai-duel-box">
+            <div class="ai-duel-header">
+              <span>Cases by State</span>
+              <span style="color:#f4be5e;">2023 Total</span>
+            </div>
+            <div class="duel-bars-wrap">
+              ${duelBarsHtml}
+            </div>
+            <div style="font-size:0.7rem; color:#94a3b8; margin-top:12px; line-height:1.45; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+              💡 <em>Note: Higher lines mean more people were tested and put on free treatment under the government's TB program.</em>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateArena() {
+      // Update dock count
+      dockCount.textContent = `Fighters in the Ring (${activeFighters.length}/6):`;
+
+      // Update Roster Buttons & Map Highlights
+      document.querySelectorAll('.tile-btn').forEach(b => b.classList.remove('selected'));
+      document.querySelectorAll('.mini-state-shape').forEach(s => {
+        for (let i = 0; i < 6; i++) s.classList.remove('active-' + i);
+      });
+
+      // Clear & Rebuild Chips
+      chipsContainer.innerHTML = '';
+      raceContainer.innerHTML = '';
+
+      if (activeFighters.length === 0) {
+        chipsContainer.innerHTML = '<span style="color:#64748b; font-size:0.75rem;">Click any state on the map or select below to begin.</span>';
+        renderEmptyChart();
+        return;
+      }
+
+      activeFighters.forEach((sName, idx) => {
+        const color = PALETTE[idx % PALETTE.length];
+        const sInfo = STATES_DATA[sName] || { latest: 0, pct: 0, clean: '', rank: '--', vals: [0,0,0,0,0] };
+
+        // Chip
+        const chip = document.createElement('div');
+        chip.className = 'fighter-tag';
+        chip.style.background = color + '22';
+        chip.style.borderColor = color + '66';
+        chip.innerHTML = `
+          <span class="fighter-dot" style="background:${color};"></span>
+          <span>${sName}</span>
+          <span class="fighter-remove" onclick="toggleFighter('${sName}')">✕</span>
+        `;
+        chipsContainer.appendChild(chip);
+
+        // Highlight Tile
+        const tile = document.getElementById('tile-' + sInfo.clean);
+        if (tile) {
+          tile.classList.add('selected');
+          tile.style.borderColor = color;
+        }
+
+        // Highlight Map
+        const mapShape = document.getElementById('mshape-' + sInfo.clean);
+        if (mapShape) {
+          mapShape.classList.add('active-' + (idx % 6));
+        }
+
+        // Telemetry Card
+        const rcard = document.createElement('div');
+        rcard.className = 'rcard';
+        rcard.style.borderLeftColor = color;
+        const deltaClass = sInfo.pct >= 0 ? 'text-amber' : 'text-green';
+        const sign = sInfo.pct >= 0 ? '+' : '';
+        rcard.innerHTML = `
+          <div class="rcard-name">${sName}</div>
+          <div class="rcard-val">${sInfo.latest.toLocaleString()}</div>
+          <div class="rcard-sub ${deltaClass}">${sign}${sInfo.pct}% vs 2019</div>
+        `;
+        raceContainer.appendChild(rcard);
+      });
+
+      // Draw SVG Line Chart
+      renderChart();
+      updateAiAnalyst();
+      
+    }
+
+    function renderEmptyChart() {
+      chartSvg.innerHTML = `
+        <text x="380" y="180" text-anchor="middle" fill="#475569" font-size="14" font-weight="600">
+          Arena is empty. Pick a matchup or click on India map!
+        </text>
+      `;
+    }
+
+    function renderChart() {
+      const padding = { top: 30, right: 40, bottom: 40, left: 75 };
+      const width = 760;
+      const height = 360;
+      const plotW = width - padding.left - padding.right;
+      const plotH = height - padding.top - padding.bottom;
+
+      // Find max value among active fighters
+      let maxVal = 10000;
+      activeFighters.forEach(sName => {
+        const vals = STATES_DATA[sName]?.vals || [];
+        vals.forEach(v => { if (v > maxVal) maxVal = v; });
+      });
+      maxVal = Math.ceil(maxVal * 1.15); // Add 15% headroom
+
+      let svgHtml = '';
+
+      // Grid lines
+      const gridSteps = 4;
+      for (let i = 0; i <= gridSteps; i++) {
+        const yVal = Math.round(maxVal / gridSteps * i);
+        const yPos = padding.top + plotH - (yVal / maxVal * plotH);
+        svgHtml += `
+          <line x1="${padding.left}" y1="${yPos}" x2="${width - padding.right}" y2="${yPos}" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+          <text x="${padding.left - 12}" y="${yPos + 4}" text-anchor="end" fill="#64748b" font-size="10" font-family="'JetBrains Mono'">${(yVal / 1000).toFixed(0)}k</text>
+        `;
+      }
+
+      // Year columns & 2020 COVID Disruption Highlight
+      const xStep = plotW / (YEARS.length - 1);
+      
+      // Subtle 2020 Lockdown Shaded Area
+      const xPos_2020 = padding.left + 1 * xStep;
+      const bandW = xStep * 0.7;
+      svgHtml += `
+        <rect x="${xPos_2020 - bandW/2}" y="${padding.top}" width="${bandW}" height="${plotH}" fill="rgba(239, 68, 68, 0.05)" rx="4" />
+        <line x1="${xPos_2020}" y1="${padding.top}" x2="${xPos_2020}" y2="${padding.top + plotH}" stroke="rgba(239, 68, 68, 0.25)" stroke-dasharray="4,4" stroke-width="1.2" />
+        <rect x="${xPos_2020 - 75}" y="${padding.top + 6}" width="150" height="18" fill="rgba(14, 18, 28, 0.85)" rx="4" stroke="rgba(239,68,68,0.4)" stroke-width="0.8" />
+        <text x="${xPos_2020}" y="${padding.top + 18}" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="700" letter-spacing="0.02em">⚡ 2020 COVID LOCKDOWN SHOCK</text>
+      `;
+
+      YEARS.forEach((yr, i) => {
+        const xPos = padding.left + i * xStep;
+        svgHtml += `
+          <line x1="${xPos}" y1="${padding.top}" x2="${xPos}" y2="${padding.top + plotH}" stroke="rgba(255,255,255,0.04)" stroke-dasharray="3,3" />
+          <text x="${xPos}" y="${height - 12}" text-anchor="middle" fill="${yr === 2020 ? '#fca5a5' : '#94a3b8'}" font-size="11" font-weight="700">${yr}</text>
+        `;
+      });
+
+      // Draw Lines for Each Fighter
+      activeFighters.forEach((sName, idx) => {
+        const color = PALETTE[idx % PALETTE.length];
+        const vals = STATES_DATA[sName]?.vals || [0,0,0,0,0];
+        const points = vals.map((v, i) => {
+          const x = padding.left + i * xStep;
+          const y = padding.top + plotH - (v / maxVal * plotH);
+          return { x, y, v, yr: YEARS[i] };
+        });
+
+        // Polyline path
+        const d = "M " + points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" L ");
+        svgHtml += `
+          <path d="${d}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 6px ${color}66);" />
+        `;
+
+        // Dots & hover circles
+        points.forEach(p => {
+          svgHtml += `
+            <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="${color}" stroke="#060913" stroke-width="2" />
+            <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="14" fill="transparent" style="cursor:pointer;" onmouseenter="showPointTooltip(event, '${sName}', '${p.yr}', ${p.v}, '${color}')" onmouseleave="hideTooltip()" />
+          `;
+        });
+      });
+
+      chartSvg.innerHTML = svgHtml;
+    }
+
+    // Tooltip Helpers
+    
+    function getCleanStateKey(name) {
+      if (!name) return "";
+      if (STATES_DATA[name]) return name;
+      const norm = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+      for (const k in STATES_DATA) {
+        if (k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase() === norm) {
+          return k;
+        }
+      }
+      return name;
+    }
+    function showTooltip(e, rawName) {
+      const sName = getCleanStateKey(rawName);
+      const s = STATES_DATA[sName];
+      if (!s) return;
+      tooltip.innerHTML = `<strong>${s.name}</strong><br>Rank: #${s.rank} · 2023: ${s.latest.toLocaleString()} cases`;
+      tooltip.style.display = 'block';
+      moveTooltip(e);
+    }
+
+    function showPointTooltip(e, sName, yr, val, color) {
+      tooltip.innerHTML = `<span style="color:${color};">●</span> <strong>${sName} (${yr})</strong><br>Reported: <strong>${val.toLocaleString()}</strong>`;
+      tooltip.style.display = 'block';
+      moveTooltip(e);
+    }
+
+    function moveTooltip(e) {
+      tooltip.style.left = e.clientX + 'px';
+      tooltip.style.top = e.clientY + 'px';
+    }
+
+    function hideTooltip() {
+      tooltip.style.display = 'none';
+    }
+
+    function openAppPage(e, key) {
+      if (e && e.preventDefault) e.preventDefault();
+      // 1. Click parent unsandboxed link
+      try {
+        if (window.parent && window.parent.document) {
+          const link = window.parent.document.getElementById('st-nav-link-' + key);
+          if (link) {
+            link.click();
+            return false;
+          }
+        }
+      } catch(err) {}
+
+      // 2. PostMessage to parent
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'aerotb-nav', page: key }, '*');
+        }
+      } catch(err) {}
+
+      // 3. Try top location
+      const targetUrl = '/?page=' + key;
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+          return false;
+        }
+      } catch(err) {}
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.location.href = targetUrl;
+          return false;
+        }
+      } catch(err) {}
+
+      if (window.location.protocol.startsWith('http')) {
+        window.location.href = targetUrl;
+      } else {
+        window.location.href = (key === 'Home' ? 'preview.html' : 'preview.html#' + key);
+      }
+      return false;
+    }
+
+    // INITIAL RENDER
+    updateArena();
+
+    // TOP NAVIGATION PROTOCOL ADAPTATION FOR STREAMLIT WEB APP
+    const isHttp = window.location.protocol.startsWith('http');
+    if (isHttp) {
+      document.querySelectorAll('.nav-pill').forEach(a => {
+        const h = a.getAttribute('href');
+        if (h === 'preview.html') a.href = '/?page=Home';
+        else if (h === 'compare_preview.html') a.href = '/?page=compare';
+        else if (h && (h.includes('#step-2') || h.includes('clusters'))) a.href = '/?page=clusters';
+        else if (h && (h.includes('#story') || h.includes('explainer'))) a.href = '/?page=explainer';
+        if (!a.href.startsWith('http') || a.href.includes(window.location.host)) {
+          a.target = '_top';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
