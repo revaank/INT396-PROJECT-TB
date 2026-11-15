@@ -300,6 +300,7 @@ NAV_BUS = """
   <a id="st-nav-link-compare" href="/?page=compare" target="_top"></a>
   <a id="st-nav-link-overcome" href="/?page=overcome" target="_top"></a>
   <a id="st-nav-link-clusters" href="/?page=overcome" target="_top"></a>
+  <a id="st-nav-link-explainer" href="/?page=explainer" target="_top"></a>
   <a id="st-nav-link-knowledge" href="/?page=knowledge" target="_top"></a>
   <a id="st-nav-link-help" href="/?page=knowledge" target="_top"></a>
 </div>
